@@ -75,7 +75,7 @@ S = <1 day, M = 1–3 days, L = 3–5 days.
 - **P2P-032** (M) PO PDF generation + manual "send to vendor" email action (editable
   message, attaches PDF).
 - **P2P-033** (S) PO status machine (`Draft → Pending Approval → Issued → Partially
-  Received → Fully Received → Closed`, plus `Cancelled`) with guarded transitions.
+Received → Fully Received → Closed`, plus `Cancelled`) with guarded transitions.
 
 ## Epic E — Goods Receipt
 

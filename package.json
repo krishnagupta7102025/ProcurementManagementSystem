@@ -1,0 +1,18 @@
+{
+  "name": "p2p",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "pnpm --parallel --filter api --filter web run dev",
+    "build": "pnpm --recursive --if-present run build",
+    "lint": "pnpm --filter api run lint && pnpm --filter web run lint",
+    "typecheck": "pnpm --recursive --if-present run typecheck",
+    "test": "pnpm --filter api run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}

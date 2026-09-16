@@ -1,0 +1,91 @@
+// Losung360 Procure-to-Pay — Phase 0 foundation schema (P2P-002).
+// See docs/00-prd.md for the full data model narrative.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A Losung360 tenant. Every other table is scoped by orgId — see
+/// src/prisma/scoped-prisma.ts for the enforcement mechanism (P2P-002 AC).
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  costCenters CostCenter[]
+  auditLogs   AuditLogEntry[]
+
+  @@map("orgs")
+}
+
+enum Role {
+  REQUESTER
+  APPROVER
+  BUYER
+  RECEIVER
+  AP
+  CONTROLLER
+  ADMIN
+}
+
+/// Mirrors identity from Losung360 Central Login (P2P-003) — this table is a
+/// local cache of SSO users, not a source of truth for credentials.
+model User {
+  id             String   @id @default(cuid())
+  orgId          String
+  centralLoginId String   @unique
+  email          String
+  displayName    String
+  roles          Role[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  org Org @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, email])
+  @@index([orgId])
+  @@map("users")
+}
+
+model CostCenter {
+  id         String   @id @default(cuid())
+  orgId      String
+  code       String
+  name       String
+  department String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  org Org @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, code])
+  @@index([orgId])
+  @@map("cost_centers")
+}
+
+/// Append-only, polymorphic audit trail (P2P-004). Never updated or deleted —
+/// only inserted via AuditService.record().
+model AuditLogEntry {
+  id         String   @id @default(cuid())
+  orgId      String
+  entityType String
+  entityId   String
+  action     String
+  actorId    String
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  org Org @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, entityType, entityId])
+  @@map("audit_log_entries")
+}

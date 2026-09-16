@@ -6,11 +6,16 @@ Claude Code to build it).
 
 ## Prerequisites
 
-- Node.js 20+, pnpm 9+
-- Docker (for local Postgres + Redis)
-- AWS CLI configured with access to the dev S3 bucket (or use a local MinIO container
-  for fully offline dev — see `docker-compose.yml` once P2P-001 lands)
-- Access to Losung360 Central Login dev/staging OIDC credentials (ask platform team)
+- Node.js 24+ (LTS), pnpm 9+ (`corepack enable && corepack prepare pnpm@9 --activate`)
+- Docker (for local Postgres + Redis) — **or**, if you don't have Docker, run
+  `pnpm --filter api exec prisma dev --detach` instead: Prisma 7 ships a real local
+  Postgres you can run standalone. Redis still needs Docker (or a native install) for
+  the BullMQ-backed tickets.
+- AWS CLI configured with access to the dev S3 bucket (or point `S3_*` env vars at a
+  local MinIO container for fully offline dev)
+- Access to Losung360 Central Login dev/staging OIDC credentials (ask platform team) —
+  until that's available, `CENTRAL_LOGIN_OIDC_ISSUER` can be left blank; every guarded
+  route will correctly 401 rather than silently allow access.
 
 ## First-time setup
 
@@ -18,10 +23,10 @@ Claude Code to build it).
 git clone <this-repo>
 cd p2p
 pnpm install
-cp .env.example .env        # fill in DB, Redis, S3, Central Login OIDC values
-docker compose up -d        # starts local Postgres + Redis
-pnpm --filter api prisma migrate dev
-pnpm --filter api prisma db seed   # runs P2P-081 seed script once it exists
+cp .env.example apps/api/.env    # fill in DB, Redis, S3, Central Login OIDC values
+docker compose up -d             # starts local Postgres + Redis
+pnpm --filter api run db:migrate
+pnpm --filter api run db:seed    # runs P2P-081 seed script once it exists
 ```
 
 ## Running locally
@@ -30,25 +35,37 @@ pnpm --filter api prisma db seed   # runs P2P-081 seed script once it exists
 pnpm dev
 ```
 
-This runs both the NestJS API and the Next.js frontend in watch mode (see
-[CLAUDE.md](../CLAUDE.md) for the exact ports once P2P-001 scaffolds them).
+This runs both the NestJS API (`apps/api`, default port 3000) and the Next.js
+frontend (`apps/web`, default port 3000 as well — set `PORT` on one of them
+if running both at once) in watch mode.
 
-## Environment variables (fill in `.env` from `.env.example`)
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Postgres connection string |
-| `REDIS_URL` | Redis connection string (cache + BullMQ) |
-| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Document storage |
-| `CENTRAL_LOGIN_OIDC_ISSUER`, `CENTRAL_LOGIN_CLIENT_ID`, `CENTRAL_LOGIN_CLIENT_SECRET` | SSO |
-| `NOTIFICATION_CENTER_API_URL` | Losung360 platform notification integration |
-
-## Tests
+## Verifying everything works
 
 ```bash
-pnpm test          # unit tests
-pnpm test:e2e       # end-to-end (P2P-082 happy-path suite)
+pnpm run typecheck   # all workspace packages
+pnpm run lint        # oxlint (api) + eslint (web)
+pnpm run test        # vitest, api (needs DATABASE_URL reachable)
+pnpm run build       # nest build + next build
 ```
+
+## Environment variables (fill in `apps/api/.env` from the root `.env.example`)
+
+| Variable                                                                              | Purpose                                     |
+| ------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `DATABASE_URL`                                                                        | Postgres connection string                  |
+| `REDIS_URL`                                                                           | Redis connection string (cache + BullMQ)    |
+| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage                            |
+| `CENTRAL_LOGIN_OIDC_ISSUER`, `CENTRAL_LOGIN_CLIENT_ID`, `CENTRAL_LOGIN_CLIENT_SECRET` | SSO                                         |
+| `NOTIFICATION_CENTER_API_URL`                                                         | Losung360 platform notification integration |
+
+The api's Nest-generated e2e suite (currently just a smoke test) runs separately:
+
+```bash
+pnpm --filter api run test:e2e
+```
+
+The P2P-082 full happy-path integration test (requisition → payment) will live
+alongside the other vitest specs and run via `pnpm run test` once it exists.
 
 ## Working with Claude Code on this repo
 

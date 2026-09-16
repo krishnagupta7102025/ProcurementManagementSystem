@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+coverage/
+
+# Regenerated via `prisma generate` — never hand-edited, never committed.
+apps/api/src/generated/

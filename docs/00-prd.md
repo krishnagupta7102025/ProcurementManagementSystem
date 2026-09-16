@@ -41,16 +41,16 @@ discounts, no spend visibility, and slow month-end close.
 
 ## 3. Users & Roles
 
-| Role | Description | Key permissions |
-|---|---|---|
-| Requester | Any employee who needs to buy something | Create requisitions, view own requisition status |
-| Approver | Manager / budget owner | Approve/reject requisitions and POs within their delegated limit |
-| Procurement / Buyer | Converts approved requisitions into POs, manages vendors | Create/send POs, manage vendor master, negotiate terms |
-| Warehouse / Receiver | Confirms goods/services received | Create GRNs against POs, flag discrepancies |
-| Finance / AP (Accounts Payable) | Processes invoices and payments | Enter/upload invoices, run matching, schedule/release payments, export to accounting |
-| Finance Controller | Senior finance approver | Approve payment batches above threshold, view all spend analytics |
-| Vendor (external, later phase) | Supplier | View PO, submit invoice via portal (Phase 1+) |
-| Admin | Org/tenant admin | Configure approval rules, spend limits, GL/cost-center mapping, user-role assignment |
+| Role                            | Description                                              | Key permissions                                                                      |
+| ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Requester                       | Any employee who needs to buy something                  | Create requisitions, view own requisition status                                     |
+| Approver                        | Manager / budget owner                                   | Approve/reject requisitions and POs within their delegated limit                     |
+| Procurement / Buyer             | Converts approved requisitions into POs, manages vendors | Create/send POs, manage vendor master, negotiate terms                               |
+| Warehouse / Receiver            | Confirms goods/services received                         | Create GRNs against POs, flag discrepancies                                          |
+| Finance / AP (Accounts Payable) | Processes invoices and payments                          | Enter/upload invoices, run matching, schedule/release payments, export to accounting |
+| Finance Controller              | Senior finance approver                                  | Approve payment batches above threshold, view all spend analytics                    |
+| Vendor (external, later phase)  | Supplier                                                 | View PO, submit invoice via portal (Phase 1+)                                        |
+| Admin                           | Org/tenant admin                                         | Configure approval rules, spend limits, GL/cost-center mapping, user-role assignment |
 
 Roles are additive and configurable per org — a small org may collapse Buyer and AP
 into one person; the system must not hardcode a 1:1 role-to-person assumption.
@@ -104,7 +104,7 @@ including rejection/exception branches.
   the vendor contact (manual send with an editable message in v1; Phase 1 vendor
   portal auto-notifies).
 - PO statuses: `Draft → Pending Approval → Issued → Partially Received → Fully
-  Received → Closed`, plus `Cancelled`.
+Received → Closed`, plus `Cancelled`.
 
 ### 4.4 Goods Receipt (GRN)
 
@@ -127,7 +127,7 @@ including rejection/exception branches.
 - Duplicate-invoice detection: same vendor + invoice number (+ optionally amount)
   already in the system is flagged before submission.
 - Invoice statuses: `Draft → Submitted → Matched / Match Exception → Approved for
-  Payment → Paid → Cancelled/Void`.
+Payment → Paid → Cancelled/Void`.
 
 ### 4.6 Matching
 
@@ -199,17 +199,17 @@ including rejection/exception branches.
 
 ## 7. Integrations
 
-| Integration | Phase | Notes |
-|---|---|---|
-| Losung360 Central Login (SSO/RBAC) | Phase 0 | Required from day one — no standalone auth |
-| Notification center (Losung360 platform) | Phase 0 | Approval requests, escalations, match exceptions |
-| Object storage (S3) | Phase 0 | PO PDFs, invoice uploads, GRN attachments |
-| Bank statement CSV import | Phase 0 | Manual reconciliation aid only |
-| Accounting system export (CSV) | Phase 0 | Generic CSV; native API sync is Phase 1 (target system TBD) |
-| Invoice OCR/auto-extraction | Phase 1 | Field stubbed in schema now, not implemented |
-| Vendor self-service portal | Phase 1 | Vendors currently receive PO via email only |
-| Payment initiation (bank API / payment gateway) | Phase 1+ | v1 tracks payment status only, doesn't move money |
-| ERP direct sync (if/when a target ERP is chosen) | Phase 2 | Depends on which accounting system Losung360 standardizes on |
+| Integration                                      | Phase    | Notes                                                        |
+| ------------------------------------------------ | -------- | ------------------------------------------------------------ |
+| Losung360 Central Login (SSO/RBAC)               | Phase 0  | Required from day one — no standalone auth                   |
+| Notification center (Losung360 platform)         | Phase 0  | Approval requests, escalations, match exceptions             |
+| Object storage (S3)                              | Phase 0  | PO PDFs, invoice uploads, GRN attachments                    |
+| Bank statement CSV import                        | Phase 0  | Manual reconciliation aid only                               |
+| Accounting system export (CSV)                   | Phase 0  | Generic CSV; native API sync is Phase 1 (target system TBD)  |
+| Invoice OCR/auto-extraction                      | Phase 1  | Field stubbed in schema now, not implemented                 |
+| Vendor self-service portal                       | Phase 1  | Vendors currently receive PO via email only                  |
+| Payment initiation (bank API / payment gateway)  | Phase 1+ | v1 tracks payment status only, doesn't move money            |
+| ERP direct sync (if/when a target ERP is chosen) | Phase 2  | Depends on which accounting system Losung360 standardizes on |
 
 ## 8. Data Model (high level)
 
@@ -219,6 +219,7 @@ Core entities: `Org`, `User` (from Central Login), `CostCenter`, `Vendor`,
 `PaymentBatch`, `Payment`, `AuditLogEntry`.
 
 Relationships of note:
+
 - `RequisitionLine` → many `POLine` (split across vendors) and `POLine` → many
   `RequisitionLine` (consolidated requisitions) — many-to-many via a junction table.
 - `PurchaseOrder` → many `GoodsReceipt` (partial receipts) → many `InvoiceLine`
@@ -253,7 +254,7 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
 ## 11. Open Questions
 
 1. **Target accounting system for GL sync** — Tally, Zoho Books, QuickBooks, or
-   something else? Determines Phase 1+ integration design. *(Owner: Krishna Gupta)*
+   something else? Determines Phase 1+ integration design. _(Owner: Krishna Gupta)_
 2. **FX rate source** for multi-currency conversion (manual entry vs. an API like
    exchangerate.host / a bank feed)?
 3. **Payment initiation** — is there an appetite to integrate a bank API / payment
