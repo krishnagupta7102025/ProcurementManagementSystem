@@ -10,6 +10,12 @@ const ORG_SCOPED_MODELS = new Set([
   'AuditLogEntry',
   'Vendor',
   'VendorContact',
+  'Requisition',
+  'RequisitionLine',
+  'RequisitionAttachment',
+  'ApprovalRule',
+  'ApprovalRuleStep',
+  'ApprovalStep',
 ]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);

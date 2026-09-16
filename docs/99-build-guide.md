@@ -7,10 +7,20 @@ Claude Code to build it).
 ## Prerequisites
 
 - Node.js 24+ (LTS), pnpm 9+ (`corepack enable && corepack prepare pnpm@9 --activate`)
-- Docker (for local Postgres + Redis) — **or**, if you don't have Docker, run
-  `pnpm --filter api exec prisma dev --detach` instead: Prisma 7 ships a real local
-  Postgres you can run standalone. Redis still needs Docker (or a native install) for
-  the BullMQ-backed tickets.
+- Docker (for local Postgres + Redis) — **or**, if you don't have Docker:
+  - Postgres: `pnpm --filter api exec prisma dev --detach` (Prisma 7 ships a real
+    local Postgres you can run standalone). Known issue: this local instance's
+    shadow database can get stuck (`prisma migrate dev` fails with "type ... already
+    exists" against the shadow db even though the real schema is fine) — if that
+    happens, generate the migration SQL directly instead of letting `migrate dev`
+    diff it: `prisma migrate diff --from-config-datasource --to-schema
+./prisma/schema.prisma --script`, save the output as a new
+    `prisma/migrations/<timestamp>_<name>/migration.sql`, then `prisma migrate
+deploy` (which doesn't touch the shadow db at all).
+  - Redis: build from source — it's a small, dependency-light C project.
+    `curl -fSL -o redis.tar.gz https://github.com/redis/redis/archive/refs/tags/<version>.tar.gz`,
+    extract, `make`, then run `src/redis-server --daemonize yes`. No sudo/Homebrew
+    needed if Xcode Command Line Tools (`cc`, `make`) are already installed.
 - AWS CLI configured with access to the dev S3 bucket (or point `S3_*` env vars at a
   local MinIO container for fully offline dev)
 - Access to Losung360 Central Login dev/staging OIDC credentials (ask platform team) —
@@ -50,13 +60,15 @@ pnpm run build       # nest build + next build
 
 ## Environment variables (fill in `apps/api/.env` from the root `.env.example`)
 
-| Variable                                                                              | Purpose                                     |
-| ------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `DATABASE_URL`                                                                        | Postgres connection string                  |
-| `REDIS_URL`                                                                           | Redis connection string (cache + BullMQ)    |
-| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage                            |
-| `CENTRAL_LOGIN_OIDC_ISSUER`, `CENTRAL_LOGIN_CLIENT_ID`, `CENTRAL_LOGIN_CLIENT_SECRET` | SSO                                         |
-| `NOTIFICATION_CENTER_API_URL`                                                         | Losung360 platform notification integration |
+| Variable                                                                              | Purpose                                             |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `DATABASE_URL`                                                                        | Postgres connection string                          |
+| `REDIS_URL`                                                                           | Redis connection string (cache + BullMQ)            |
+| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage                                    |
+| `CENTRAL_LOGIN_OIDC_ISSUER`, `CENTRAL_LOGIN_CLIENT_ID`, `CENTRAL_LOGIN_CLIENT_SECRET` | SSO                                                 |
+| `NOTIFICATION_CENTER_API_URL`                                                         | Losung360 platform notification integration         |
+| `APPROVAL_SLA_REMINDER_HOURS`, `APPROVAL_SLA_ESCALATE_HOURS`                          | P2P-023 SLA thresholds (default 48h / 96h)          |
+| `APPROVAL_SLA_CHECK_INTERVAL_MS`                                                      | How often the escalation job scans (default 15 min) |
 
 The api's Nest-generated e2e suite (currently just a smoke test) runs separately:
 

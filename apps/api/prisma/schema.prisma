@@ -18,10 +18,12 @@ model Org {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users       User[]
-  costCenters CostCenter[]
-  auditLogs   AuditLogEntry[]
-  vendors     Vendor[]
+  users         User[]
+  costCenters   CostCenter[]
+  auditLogs     AuditLogEntry[]
+  vendors       Vendor[]
+  requisitions  Requisition[]
+  approvalRules ApprovalRule[]
 
   @@map("orgs")
 }
@@ -45,10 +47,18 @@ model User {
   email          String
   displayName    String
   roles          Role[]
+  // Escalation target (P2P-023) once Central Login syncs a real org chart —
+  // nullable, so an unmapped user simply never escalates rather than erroring.
+  managerId      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  org Org @relation(fields: [orgId], references: [id])
+  org                 Org                @relation(fields: [orgId], references: [id])
+  manager             User?              @relation("UserManager", fields: [managerId], references: [id])
+  reports             User[]             @relation("UserManager")
+  requisitions        Requisition[]
+  approvalRuleSteps   ApprovalRuleStep[]
+  approvalSteps       ApprovalStep[]
 
   @@unique([orgId, email])
   @@index([orgId])
@@ -65,7 +75,9 @@ model CostCenter {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  org Org @relation(fields: [orgId], references: [id])
+  org           Org            @relation(fields: [orgId], references: [id])
+  requisitions  Requisition[]
+  approvalRules ApprovalRule[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -116,6 +128,153 @@ model VendorContact {
   @@index([orgId])
   @@index([vendorId])
   @@map("vendor_contacts")
+}
+
+enum RequisitionStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+  WITHDRAWN
+}
+
+/// Purchase Requisition (P2P-020). Money is integer minor units + ISO
+/// currency per CLAUDE.md convention. Editable only in DRAFT — submitting
+/// snapshots an approval chain onto ApprovalStep and the requisition itself
+/// becomes read-only until withdrawn or acted on by an approver.
+model Requisition {
+  id                       String            @id @default(cuid())
+  orgId                    String
+  requesterId              String
+  costCenterId             String
+  department               String
+  neededByDate             DateTime?
+  justification            String?
+  status                   RequisitionStatus @default(DRAFT)
+  estimatedTotalMinorUnits Int               @default(0)
+  currency                 String            @default("INR")
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  org           Org                     @relation(fields: [orgId], references: [id])
+  requester     User                    @relation(fields: [requesterId], references: [id])
+  costCenter    CostCenter              @relation(fields: [costCenterId], references: [id])
+  lines         RequisitionLine[]
+  attachments   RequisitionAttachment[]
+  approvalSteps ApprovalStep[]
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([orgId, requesterId])
+  @@map("requisitions")
+}
+
+model RequisitionLine {
+  id                           String @id @default(cuid())
+  orgId                        String
+  requisitionId                String
+  description                  String
+  quantity                     Int
+  unit                         String
+  estimatedUnitPriceMinorUnits Int
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+
+  @@index([orgId])
+  @@index([requisitionId])
+  @@map("requisition_lines")
+}
+
+/// Quotes/spec sheets attached to a requisition, stored in S3 under the
+/// org-scoped key prefix enforced by StorageService (P2P-005).
+model RequisitionAttachment {
+  id            String   @id @default(cuid())
+  orgId         String
+  requisitionId String
+  s3Key         String
+  fileName      String
+  createdAt     DateTime @default(now())
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+
+  @@index([orgId])
+  @@index([requisitionId])
+  @@map("requisition_attachments")
+}
+
+/// Configurable approval policy (P2P-021): matches on department/cost
+/// center/amount band, resolving to an ordered approver list. A null
+/// department or costCenterId is a wildcard (matches any). Editing a rule
+/// never touches ApprovalStep rows already snapshotted for in-flight
+/// requisitions — see ApprovalStep below.
+model ApprovalRule {
+  id                  String   @id @default(cuid())
+  orgId               String
+  name                String
+  department          String?
+  costCenterId        String?
+  minAmountMinorUnits Int      @default(0)
+  maxAmountMinorUnits Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  org        Org                @relation(fields: [orgId], references: [id])
+  costCenter CostCenter?        @relation(fields: [costCenterId], references: [id])
+  steps      ApprovalRuleStep[]
+
+  @@index([orgId])
+  @@map("approval_rules")
+}
+
+model ApprovalRuleStep {
+  id             String @id @default(cuid())
+  orgId          String
+  approvalRuleId String
+  stepOrder      Int
+  approverUserId String
+
+  approvalRule ApprovalRule @relation(fields: [approvalRuleId], references: [id])
+  approver     User         @relation(fields: [approverUserId], references: [id])
+
+  @@unique([approvalRuleId, stepOrder])
+  @@index([orgId])
+  @@map("approval_rule_steps")
+}
+
+enum ApprovalStepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+/// A concretized, immutable-once-created snapshot of one requisition's
+/// approval chain, resolved from ApprovalRule at submit time (P2P-021 AC:
+/// changing a rule later never retroactively alters an in-flight chain).
+/// becameActiveAt/reminderSentAt/escalatedAt drive the idempotent SLA
+/// escalation job (P2P-023) — each fires at most once per step.
+model ApprovalStep {
+  id             String             @id @default(cuid())
+  orgId          String
+  requisitionId  String
+  stepOrder      Int
+  approverUserId String
+  status         ApprovalStepStatus @default(PENDING)
+  reason         String?
+  becameActiveAt DateTime?
+  reminderSentAt DateTime?
+  escalatedAt    DateTime?
+  actedAt        DateTime?
+  createdAt      DateTime           @default(now())
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+  approver    User        @relation(fields: [approverUserId], references: [id])
+
+  @@unique([requisitionId, stepOrder])
+  @@index([orgId])
+  @@index([orgId, approverUserId, status])
+  @@map("approval_steps")
 }
 
 /// Append-only, polymorphic audit trail (P2P-004). Never updated or deleted —

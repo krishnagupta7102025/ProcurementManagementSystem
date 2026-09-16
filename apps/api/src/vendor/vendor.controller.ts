@@ -18,7 +18,7 @@ export class VendorController {
   @Post()
   @Roles(Role.BUYER, Role.ADMIN)
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateVendorDto) {
-    return this.vendors.create(user.orgId, user.centralLoginId, dto);
+    return this.vendors.create(user.orgId, user.localUserId, dto);
   }
 
   @Get()
@@ -43,7 +43,7 @@ export class VendorController {
     @Param('id') id: string,
     @Body() dto: UpdateVendorDto,
   ) {
-    return this.vendors.update(user.orgId, user.centralLoginId, id, dto);
+    return this.vendors.update(user.orgId, user.localUserId, id, dto);
   }
 
   @Patch(':id/status')
@@ -53,6 +53,6 @@ export class VendorController {
     @Param('id') id: string,
     @Body() dto: UpdateVendorStatusDto,
   ) {
-    return this.vendors.updateStatus(user.orgId, user.centralLoginId, id, dto.status);
+    return this.vendors.updateStatus(user.orgId, user.localUserId, id, dto.status);
   }
 }

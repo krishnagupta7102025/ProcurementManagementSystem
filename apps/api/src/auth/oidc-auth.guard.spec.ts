@@ -1,6 +1,7 @@
 import type { ExecutionContext } from '@nestjs/common';
 import { UnauthorizedException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { UserService } from '../user/user.service.js';
 import { OidcAuthGuard } from './oidc-auth.guard.js';
 import { OidcJwksService } from './oidc-jwks.service.js';
 
@@ -11,11 +12,16 @@ function contextWithHeaders(headers: Record<string, string>): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
+// None of these tests reach the point where OidcAuthGuard calls
+// UserService.syncFromAuth (they all throw earlier), so an unimplemented
+// stub is enough — it's never invoked.
+const unusedUserService = {} as UserService;
+
 describe('OidcAuthGuard (P2P-003)', () => {
   let guard: OidcAuthGuard;
 
   beforeEach(() => {
-    guard = new OidcAuthGuard(new OidcJwksService());
+    guard = new OidcAuthGuard(new OidcJwksService(), unusedUserService);
   });
 
   it('rejects a request with no Authorization header (401)', async () => {
@@ -43,7 +49,7 @@ describe('OidcAuthGuard (P2P-003)', () => {
     process.env.CENTRAL_LOGIN_OIDC_ISSUER = 'https://central-login.example.test';
     const jwks = new OidcJwksService();
     vi.spyOn(jwks, 'getJwks').mockRejectedValue(new Error('discovery unreachable'));
-    guard = new OidcAuthGuard(jwks);
+    guard = new OidcAuthGuard(jwks, unusedUserService);
 
     const ctx = contextWithHeaders({ authorization: 'Bearer not-a-real-token' });
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
