@@ -4,7 +4,13 @@ import type { PrismaService } from './prisma.service.js';
  * Models that carry an orgId column and must never be queried without it.
  * Org itself is excluded — it IS the tenant boundary, not scoped by one.
  */
-const ORG_SCOPED_MODELS = new Set(['User', 'CostCenter', 'AuditLogEntry']);
+const ORG_SCOPED_MODELS = new Set([
+  'User',
+  'CostCenter',
+  'AuditLogEntry',
+  'Vendor',
+  'VendorContact',
+]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);
 const MANY_CREATE_OPS = new Set(['createMany', 'createManyAndReturn']);
