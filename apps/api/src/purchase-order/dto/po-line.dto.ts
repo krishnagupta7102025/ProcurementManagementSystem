@@ -2,7 +2,9 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsInt,
+  IsOptional,
   IsString,
   Min,
   MinLength,
@@ -26,6 +28,12 @@ export class POLineDto {
   @IsInt()
   @Min(0)
   unitPriceMinorUnits!: number;
+
+  // Service lines are closed out via a ServiceConfirmation (P2P-041)
+  // instead of a physical GRN — set once at PO creation.
+  @IsOptional()
+  @IsBoolean()
+  isService?: boolean;
 
   // Every PO line must trace back to at least one requisition line
   // (P2P-030 AC) — enforced structurally by requiring a non-empty array,

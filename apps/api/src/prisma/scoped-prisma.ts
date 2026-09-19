@@ -19,6 +19,9 @@ const ORG_SCOPED_MODELS = new Set([
   'PurchaseOrder',
   'POLine',
   'POLineRequisitionLine',
+  'GoodsReceipt',
+  'GRNLine',
+  'ServiceConfirmation',
 ]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);

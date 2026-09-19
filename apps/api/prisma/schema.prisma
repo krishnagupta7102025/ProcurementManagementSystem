@@ -25,6 +25,7 @@ model Org {
   requisitions   Requisition[]
   approvalRules  ApprovalRule[]
   purchaseOrders PurchaseOrder[]
+  goodsReceipts  GoodsReceipt[]
 
   @@map("orgs")
 }
@@ -54,13 +55,15 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  org                   Org                @relation(fields: [orgId], references: [id])
-  manager               User?              @relation("UserManager", fields: [managerId], references: [id])
-  reports               User[]             @relation("UserManager")
+  org                   Org                   @relation(fields: [orgId], references: [id])
+  manager               User?                 @relation("UserManager", fields: [managerId], references: [id])
+  reports               User[]                @relation("UserManager")
   requisitions          Requisition[]
   approvalRuleSteps     ApprovalRuleStep[]
   approvalSteps         ApprovalStep[]
   purchaseOrdersAsBuyer PurchaseOrder[]
+  goodsReceipts         GoodsReceipt[]
+  serviceConfirmations  ServiceConfirmation[]
 
   @@unique([orgId, email])
   @@index([orgId])
@@ -236,10 +239,11 @@ model PurchaseOrder {
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
-  org    Org      @relation(fields: [orgId], references: [id])
-  vendor Vendor   @relation(fields: [vendorId], references: [id])
-  buyer  User     @relation(fields: [buyerId], references: [id])
-  lines  POLine[]
+  org           Org            @relation(fields: [orgId], references: [id])
+  vendor        Vendor         @relation(fields: [vendorId], references: [id])
+  buyer         User           @relation(fields: [buyerId], references: [id])
+  lines         POLine[]
+  goodsReceipts GoodsReceipt[]
 
   @@index([orgId])
   @@index([orgId, status])
@@ -248,16 +252,21 @@ model PurchaseOrder {
 }
 
 model POLine {
-  id                  String @id @default(cuid())
+  id                  String  @id @default(cuid())
   orgId               String
   purchaseOrderId     String
   description         String
   quantity            Int
   unit                String
   unitPriceMinorUnits Int
+  // Service lines are closed out via ServiceConfirmation instead of a
+  // physical GRN (P2P-041) — set at PO creation, immutable thereafter.
+  isService           Boolean @default(false)
 
-  purchaseOrder     PurchaseOrder           @relation(fields: [purchaseOrderId], references: [id])
-  requisitionAllocs POLineRequisitionLine[]
+  purchaseOrder       PurchaseOrder           @relation(fields: [purchaseOrderId], references: [id])
+  requisitionAllocs   POLineRequisitionLine[]
+  grnLines            GRNLine[]
+  serviceConfirmation ServiceConfirmation?
 
   @@index([orgId])
   @@index([purchaseOrderId])
@@ -285,6 +294,67 @@ model POLineRequisitionLine {
   @@index([poLineId])
   @@index([requisitionLineId])
   @@map("po_line_requisition_lines")
+}
+
+/// One receiving event against an issued PO (P2P-040) — a PO can have many,
+/// covering partial deliveries. Physical-goods lines only; service lines
+/// use ServiceConfirmation instead.
+model GoodsReceipt {
+  id              String   @id @default(cuid())
+  orgId           String
+  purchaseOrderId String
+  receivedById    String
+  receivedDate    DateTime @default(now())
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  org           Org           @relation(fields: [orgId], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  receivedBy    User          @relation(fields: [receivedById], references: [id])
+  lines         GRNLine[]
+
+  @@index([orgId])
+  @@index([purchaseOrderId])
+  @@map("goods_receipts")
+}
+
+model GRNLine {
+  id               String  @id @default(cuid())
+  orgId            String
+  goodsReceiptId   String
+  poLineId         String
+  quantityReceived Int
+  conditionNotes   String?
+  // Set only when this line's cumulative received quantity exceeds the PO
+  // line's ordered quantity beyond tolerance and a Buyer explicitly
+  // overrode the block (P2P-040 AC) — null on every normal-quantity line.
+  overrideReason   String?
+
+  goodsReceipt GoodsReceipt @relation(fields: [goodsReceiptId], references: [id])
+  poLine       POLine       @relation(fields: [poLineId], references: [id])
+
+  @@index([orgId])
+  @@index([goodsReceiptId])
+  @@index([poLineId])
+  @@map("grn_lines")
+}
+
+/// Closes out a service PO line (P2P-041) — a designated approver confirms
+/// the service was delivered, in place of a quantity-based GRN. One
+/// confirmation per line: a service is either done or it isn't.
+model ServiceConfirmation {
+  id            String   @id @default(cuid())
+  orgId         String
+  poLineId      String   @unique
+  confirmedById String
+  confirmedAt   DateTime @default(now())
+  notes         String?
+
+  poLine      POLine @relation(fields: [poLineId], references: [id])
+  confirmedBy User   @relation(fields: [confirmedById], references: [id])
+
+  @@index([orgId])
+  @@map("service_confirmations")
 }
 
 /// Configurable approval policy (P2P-021): matches on department/cost

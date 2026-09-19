@@ -58,6 +58,7 @@ export class PurchaseOrderService {
           quantity: line.quantity,
           unit: line.unit,
           unitPriceMinorUnits: line.unitPriceMinorUnits,
+          isService: line.isService ?? false,
         } as never,
       });
 

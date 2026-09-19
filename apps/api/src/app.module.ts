@@ -7,6 +7,7 @@ import { ApprovalModule } from './approval/approval.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { EmailModule } from './email/email.module.js';
+import { GoodsReceiptModule } from './goods-receipt/goods-receipt.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { PurchaseOrderModule } from './purchase-order/purchase-order.module.js';
@@ -30,6 +31,7 @@ import { VendorModule } from './vendor/vendor.module.js';
     ApprovalModule,
     RequisitionModule,
     PurchaseOrderModule,
+    GoodsReceiptModule,
   ],
   controllers: [AppController],
   providers: [AppService],
