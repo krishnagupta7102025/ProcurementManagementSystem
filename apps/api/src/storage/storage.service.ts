@@ -40,4 +40,20 @@ export class StorageService {
     const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
     return getSignedUrl(this.client, command, { expiresIn: SIGNED_URL_TTL_SECONDS });
   }
+
+  /**
+   * Direct server-side upload — for content generated in-process (e.g. a
+   * PDF), as opposed to getUploadUrl's client-side presigned PUT flow.
+   */
+  async putObject(
+    orgId: string,
+    key: string,
+    body: Uint8Array,
+    contentType: string,
+  ): Promise<void> {
+    this.assertOwnedKey(orgId, key);
+    await this.client.send(
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
+    );
+  }
 }

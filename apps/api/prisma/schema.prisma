@@ -18,12 +18,13 @@ model Org {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users         User[]
-  costCenters   CostCenter[]
-  auditLogs     AuditLogEntry[]
-  vendors       Vendor[]
-  requisitions  Requisition[]
-  approvalRules ApprovalRule[]
+  users          User[]
+  costCenters    CostCenter[]
+  auditLogs      AuditLogEntry[]
+  vendors        Vendor[]
+  requisitions   Requisition[]
+  approvalRules  ApprovalRule[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("orgs")
 }
@@ -53,12 +54,13 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  org                 Org                @relation(fields: [orgId], references: [id])
-  manager             User?              @relation("UserManager", fields: [managerId], references: [id])
-  reports             User[]             @relation("UserManager")
-  requisitions        Requisition[]
-  approvalRuleSteps   ApprovalRuleStep[]
-  approvalSteps       ApprovalStep[]
+  org                   Org                @relation(fields: [orgId], references: [id])
+  manager               User?              @relation("UserManager", fields: [managerId], references: [id])
+  reports               User[]             @relation("UserManager")
+  requisitions          Requisition[]
+  approvalRuleSteps     ApprovalRuleStep[]
+  approvalSteps         ApprovalStep[]
+  purchaseOrdersAsBuyer PurchaseOrder[]
 
   @@unique([orgId, email])
   @@index([orgId])
@@ -107,8 +109,9 @@ model Vendor {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  org      Org             @relation(fields: [orgId], references: [id])
-  contacts VendorContact[]
+  org            Org             @relation(fields: [orgId], references: [id])
+  contacts       VendorContact[]
+  purchaseOrders PurchaseOrder[]
 
   @@index([orgId])
   @@index([orgId, status])
@@ -179,7 +182,8 @@ model RequisitionLine {
   unit                         String
   estimatedUnitPriceMinorUnits Int
 
-  requisition Requisition @relation(fields: [requisitionId], references: [id])
+  requisition Requisition             @relation(fields: [requisitionId], references: [id])
+  poLineLinks POLineRequisitionLine[]
 
   @@index([orgId])
   @@index([requisitionId])
@@ -201,6 +205,86 @@ model RequisitionAttachment {
   @@index([orgId])
   @@index([requisitionId])
   @@map("requisition_attachments")
+}
+
+enum POStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ISSUED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+/// Purchase Order (P2P-030). A PO's lines always trace back to at least
+/// one RequisitionLine via POLineRequisitionLine — see that model. Money
+/// is integer minor units per CLAUDE.md convention.
+model PurchaseOrder {
+  id                        String    @id @default(cuid())
+  orgId                     String
+  vendorId                  String
+  buyerId                   String
+  status                    POStatus  @default(DRAFT)
+  negotiatedTotalMinorUnits Int       @default(0)
+  currency                  String    @default("INR")
+  deliveryDate              DateTime?
+  billToAddress             String?
+  shipToAddress             String?
+  pdfS3Key                  String?
+  sentToVendorAt            DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  org    Org      @relation(fields: [orgId], references: [id])
+  vendor Vendor   @relation(fields: [vendorId], references: [id])
+  buyer  User     @relation(fields: [buyerId], references: [id])
+  lines  POLine[]
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([orgId, vendorId])
+  @@map("purchase_orders")
+}
+
+model POLine {
+  id                  String @id @default(cuid())
+  orgId               String
+  purchaseOrderId     String
+  description         String
+  quantity            Int
+  unit                String
+  unitPriceMinorUnits Int
+
+  purchaseOrder     PurchaseOrder           @relation(fields: [purchaseOrderId], references: [id])
+  requisitionAllocs POLineRequisitionLine[]
+
+  @@index([orgId])
+  @@index([purchaseOrderId])
+  @@map("po_lines")
+}
+
+/// Junction recording exactly how much of a RequisitionLine's quantity a
+/// given POLine draws on — this is what makes both "split one requisition
+/// across multiple vendor POs" and "consolidate multiple requisitions into
+/// one PO" possible, and what P2P-030's AC checks against: the sum of a
+/// RequisitionLine's allocations across every PO must not exceed its own
+/// quantity, unless overridden (RequisitionService... actually enforced in
+/// PurchaseOrderService.create()).
+model POLineRequisitionLine {
+  id                String @id @default(cuid())
+  orgId             String
+  poLineId          String
+  requisitionLineId String
+  quantity          Int
+
+  poLine          POLine          @relation(fields: [poLineId], references: [id])
+  requisitionLine RequisitionLine @relation(fields: [requisitionLineId], references: [id])
+
+  @@index([orgId])
+  @@index([poLineId])
+  @@index([requisitionLineId])
+  @@map("po_line_requisition_lines")
 }
 
 /// Configurable approval policy (P2P-021): matches on department/cost

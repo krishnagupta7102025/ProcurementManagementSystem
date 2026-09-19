@@ -36,11 +36,29 @@ export async function createTestCostCenter(
   return prisma.costCenter.create({ data: { orgId, code: tag, name: tag, department } });
 }
 
+export async function createTestVendor(
+  prisma: PrismaService,
+  orgId: string,
+  contactEmail?: string,
+) {
+  const tag = unique('vendor');
+  const vendor = await prisma.vendor.create({ data: { orgId, legalName: tag } });
+  if (contactEmail) {
+    await prisma.vendorContact.create({
+      data: { orgId, vendorId: vendor.id, name: 'Contact', email: contactEmail },
+    });
+  }
+  return vendor;
+}
+
 /** Deletes everything created under this org, in FK-safe order. */
 export async function cleanupOrg(prisma: PrismaService, orgId: string) {
   await prisma.approvalStep.deleteMany({ where: { orgId } });
   await prisma.approvalRuleStep.deleteMany({ where: { orgId } });
   await prisma.approvalRule.deleteMany({ where: { orgId } });
+  await prisma.pOLineRequisitionLine.deleteMany({ where: { orgId } });
+  await prisma.pOLine.deleteMany({ where: { orgId } });
+  await prisma.purchaseOrder.deleteMany({ where: { orgId } });
   await prisma.requisitionAttachment.deleteMany({ where: { orgId } });
   await prisma.requisitionLine.deleteMany({ where: { orgId } });
   await prisma.requisition.deleteMany({ where: { orgId } });

@@ -16,6 +16,9 @@ const ORG_SCOPED_MODELS = new Set([
   'ApprovalRule',
   'ApprovalRuleStep',
   'ApprovalStep',
+  'PurchaseOrder',
+  'POLine',
+  'POLineRequisitionLine',
 ]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);
