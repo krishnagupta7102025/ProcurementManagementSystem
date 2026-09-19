@@ -22,6 +22,9 @@ const ORG_SCOPED_MODELS = new Set([
   'GoodsReceipt',
   'GRNLine',
   'ServiceConfirmation',
+  'Invoice',
+  'InvoiceLine',
+  'MatchException',
 ]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);

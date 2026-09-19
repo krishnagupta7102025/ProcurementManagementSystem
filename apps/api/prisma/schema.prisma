@@ -18,14 +18,16 @@ model Org {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users          User[]
-  costCenters    CostCenter[]
-  auditLogs      AuditLogEntry[]
-  vendors        Vendor[]
-  requisitions   Requisition[]
-  approvalRules  ApprovalRule[]
-  purchaseOrders PurchaseOrder[]
-  goodsReceipts  GoodsReceipt[]
+  users           User[]
+  costCenters     CostCenter[]
+  auditLogs       AuditLogEntry[]
+  vendors         Vendor[]
+  requisitions    Requisition[]
+  approvalRules   ApprovalRule[]
+  purchaseOrders  PurchaseOrder[]
+  goodsReceipts   GoodsReceipt[]
+  invoices        Invoice[]
+  matchExceptions MatchException[]
 
   @@map("orgs")
 }
@@ -55,15 +57,17 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  org                   Org                   @relation(fields: [orgId], references: [id])
-  manager               User?                 @relation("UserManager", fields: [managerId], references: [id])
-  reports               User[]                @relation("UserManager")
-  requisitions          Requisition[]
-  approvalRuleSteps     ApprovalRuleStep[]
-  approvalSteps         ApprovalStep[]
-  purchaseOrdersAsBuyer PurchaseOrder[]
-  goodsReceipts         GoodsReceipt[]
-  serviceConfirmations  ServiceConfirmation[]
+  org                     Org                   @relation(fields: [orgId], references: [id])
+  manager                 User?                 @relation("UserManager", fields: [managerId], references: [id])
+  reports                 User[]                @relation("UserManager")
+  requisitions            Requisition[]
+  approvalRuleSteps       ApprovalRuleStep[]
+  approvalSteps           ApprovalStep[]
+  purchaseOrdersAsBuyer   PurchaseOrder[]
+  goodsReceipts           GoodsReceipt[]
+  serviceConfirmations    ServiceConfirmation[]
+  invoicesCreated         Invoice[]
+  matchExceptionsResolved MatchException[]
 
   @@unique([orgId, email])
   @@index([orgId])
@@ -115,6 +119,7 @@ model Vendor {
   org            Org             @relation(fields: [orgId], references: [id])
   contacts       VendorContact[]
   purchaseOrders PurchaseOrder[]
+  invoices       Invoice[]
 
   @@index([orgId])
   @@index([orgId, status])
@@ -267,6 +272,7 @@ model POLine {
   requisitionAllocs   POLineRequisitionLine[]
   grnLines            GRNLine[]
   serviceConfirmation ServiceConfirmation?
+  invoiceLines        InvoiceLine[]
 
   @@index([orgId])
   @@index([purchaseOrderId])
@@ -429,6 +435,99 @@ model ApprovalStep {
   @@index([orgId])
   @@index([orgId, approverUserId, status])
   @@map("approval_steps")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SUBMITTED
+  MATCHED
+  MATCH_EXCEPTION
+  APPROVED_FOR_PAYMENT
+  PAID
+  VOID
+}
+
+/// Vendor invoice (P2P-050). Every line points at the specific POLine it
+/// bills against — that FK chain is what "links to one or more POs" means
+/// in practice (a multi-PO invoice just has lines pointing at different
+/// POs' lines), so there's no separate invoice<->PO junction table.
+/// ocrExtractedData is a Phase 1 stub: schema is ready, nothing writes to
+/// it yet (see docs/10-phase-0-tickets.md P2P-050).
+model Invoice {
+  id                 String        @id @default(cuid())
+  orgId              String
+  vendorId           String
+  invoiceNumber      String
+  invoiceDate        DateTime
+  dueDate            DateTime?
+  currency           String        @default("INR")
+  subtotalMinorUnits Int           @default(0)
+  taxMinorUnits      Int           @default(0)
+  totalMinorUnits    Int           @default(0)
+  status             InvoiceStatus @default(DRAFT)
+  ocrExtractedData   Json?
+  fileS3Key          String?
+  createdById        String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  org             Org              @relation(fields: [orgId], references: [id])
+  vendor          Vendor           @relation(fields: [vendorId], references: [id])
+  createdBy       User             @relation(fields: [createdById], references: [id])
+  lines           InvoiceLine[]
+  matchExceptions MatchException[]
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([orgId, vendorId, invoiceNumber])
+  @@map("invoices")
+}
+
+model InvoiceLine {
+  id                  String @id @default(cuid())
+  orgId               String
+  invoiceId           String
+  poLineId            String
+  description         String
+  quantity            Int
+  unitPriceMinorUnits Int
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  poLine  POLine  @relation(fields: [poLineId], references: [id])
+
+  @@index([orgId])
+  @@index([invoiceId])
+  @@map("invoice_lines")
+}
+
+enum MatchExceptionStatus {
+  OPEN
+  RESOLVED
+}
+
+/// The diff produced when an invoice line fails 2-way/3-way match (P2P-052)
+/// and the resolution trail for it (P2P-053). One row per matching attempt
+/// that found a problem — re-matching after an adjustment creates a fresh
+/// row rather than mutating history away.
+model MatchException {
+  id               String               @id @default(cuid())
+  orgId            String
+  invoiceId        String
+  status           MatchExceptionStatus @default(OPEN)
+  diff             Json
+  resolutionAction String?
+  resolutionNotes  String?
+  resolvedById     String?
+  resolvedAt       DateTime?
+  createdAt        DateTime             @default(now())
+
+  org        Org     @relation(fields: [orgId], references: [id])
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  resolvedBy User?   @relation(fields: [resolvedById], references: [id])
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@map("match_exceptions")
 }
 
 /// Append-only, polymorphic audit trail (P2P-004). Never updated or deleted —
