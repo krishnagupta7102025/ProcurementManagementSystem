@@ -10,6 +10,7 @@ import { EmailModule } from './email/email.module.js';
 import { GoodsReceiptModule } from './goods-receipt/goods-receipt.module.js';
 import { InvoiceModule } from './invoice/invoice.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { PaymentModule } from './payment/payment.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { PurchaseOrderModule } from './purchase-order/purchase-order.module.js';
 import { RequisitionModule } from './requisition/requisition.module.js';
@@ -34,6 +35,7 @@ import { VendorModule } from './vendor/vendor.module.js';
     PurchaseOrderModule,
     GoodsReceiptModule,
     InvoiceModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -56,6 +56,9 @@ export async function cleanupOrg(prisma: PrismaService, orgId: string) {
   await prisma.approvalStep.deleteMany({ where: { orgId } });
   await prisma.approvalRuleStep.deleteMany({ where: { orgId } });
   await prisma.approvalRule.deleteMany({ where: { orgId } });
+  await prisma.bankStatementLine.deleteMany({ where: { orgId } });
+  await prisma.paymentBatchLine.deleteMany({ where: { orgId } });
+  await prisma.paymentBatch.deleteMany({ where: { orgId } });
   await prisma.matchException.deleteMany({ where: { orgId } });
   await prisma.invoiceLine.deleteMany({ where: { orgId } });
   await prisma.invoice.deleteMany({ where: { orgId } });

@@ -25,6 +25,9 @@ const ORG_SCOPED_MODELS = new Set([
   'Invoice',
   'InvoiceLine',
   'MatchException',
+  'PaymentBatch',
+  'PaymentBatchLine',
+  'BankStatementLine',
 ]);
 
 const SINGLE_CREATE_OPS = new Set(['create']);

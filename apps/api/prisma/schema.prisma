@@ -18,16 +18,18 @@ model Org {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users           User[]
-  costCenters     CostCenter[]
-  auditLogs       AuditLogEntry[]
-  vendors         Vendor[]
-  requisitions    Requisition[]
-  approvalRules   ApprovalRule[]
-  purchaseOrders  PurchaseOrder[]
-  goodsReceipts   GoodsReceipt[]
-  invoices        Invoice[]
-  matchExceptions MatchException[]
+  users              User[]
+  costCenters        CostCenter[]
+  auditLogs          AuditLogEntry[]
+  vendors            Vendor[]
+  requisitions       Requisition[]
+  approvalRules      ApprovalRule[]
+  purchaseOrders     PurchaseOrder[]
+  goodsReceipts      GoodsReceipt[]
+  invoices           Invoice[]
+  matchExceptions    MatchException[]
+  paymentBatches     PaymentBatch[]
+  bankStatementLines BankStatementLine[]
 
   @@map("orgs")
 }
@@ -57,17 +59,21 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  org                     Org                   @relation(fields: [orgId], references: [id])
-  manager                 User?                 @relation("UserManager", fields: [managerId], references: [id])
-  reports                 User[]                @relation("UserManager")
-  requisitions            Requisition[]
-  approvalRuleSteps       ApprovalRuleStep[]
-  approvalSteps           ApprovalStep[]
-  purchaseOrdersAsBuyer   PurchaseOrder[]
-  goodsReceipts           GoodsReceipt[]
-  serviceConfirmations    ServiceConfirmation[]
-  invoicesCreated         Invoice[]
-  matchExceptionsResolved MatchException[]
+  org                       Org                   @relation(fields: [orgId], references: [id])
+  manager                   User?                 @relation("UserManager", fields: [managerId], references: [id])
+  reports                   User[]                @relation("UserManager")
+  requisitions              Requisition[]
+  approvalRuleSteps         ApprovalRuleStep[]
+  approvalSteps             ApprovalStep[]
+  purchaseOrdersAsBuyer     PurchaseOrder[]
+  goodsReceipts             GoodsReceipt[]
+  serviceConfirmations      ServiceConfirmation[]
+  invoicesCreated           Invoice[]
+  matchExceptionsResolved   MatchException[]
+  paymentBatchesCreated     PaymentBatch[]        @relation("PaymentBatchCreatedBy")
+  paymentBatchesApproved    PaymentBatch[]        @relation("PaymentBatchApprovedBy")
+  paymentBatchesReleased    PaymentBatch[]        @relation("PaymentBatchReleasedBy")
+  bankStatementLinesMatched BankStatementLine[]
 
   @@unique([orgId, email])
   @@index([orgId])
@@ -454,28 +460,33 @@ enum InvoiceStatus {
 /// ocrExtractedData is a Phase 1 stub: schema is ready, nothing writes to
 /// it yet (see docs/10-phase-0-tickets.md P2P-050).
 model Invoice {
-  id                 String        @id @default(cuid())
-  orgId              String
-  vendorId           String
-  invoiceNumber      String
-  invoiceDate        DateTime
-  dueDate            DateTime?
-  currency           String        @default("INR")
-  subtotalMinorUnits Int           @default(0)
-  taxMinorUnits      Int           @default(0)
-  totalMinorUnits    Int           @default(0)
-  status             InvoiceStatus @default(DRAFT)
-  ocrExtractedData   Json?
-  fileS3Key          String?
-  createdById        String
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id                   String        @id @default(cuid())
+  orgId                String
+  vendorId             String
+  invoiceNumber        String
+  invoiceDate          DateTime
+  dueDate              DateTime?
+  currency             String        @default("INR")
+  subtotalMinorUnits   Int           @default(0)
+  taxMinorUnits        Int           @default(0)
+  totalMinorUnits      Int           @default(0)
+  // Incremented as PaymentBatches covering this invoice are released
+  // (P2P-062) — status becomes PAID once this reaches totalMinorUnits;
+  // partial payments leave it at APPROVED_FOR_PAYMENT.
+  paidAmountMinorUnits Int           @default(0)
+  status               InvoiceStatus @default(DRAFT)
+  ocrExtractedData     Json?
+  fileS3Key            String?
+  createdById          String
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
-  org             Org              @relation(fields: [orgId], references: [id])
-  vendor          Vendor           @relation(fields: [vendorId], references: [id])
-  createdBy       User             @relation(fields: [createdById], references: [id])
-  lines           InvoiceLine[]
-  matchExceptions MatchException[]
+  org               Org                @relation(fields: [orgId], references: [id])
+  vendor            Vendor             @relation(fields: [vendorId], references: [id])
+  createdBy         User               @relation(fields: [createdById], references: [id])
+  lines             InvoiceLine[]
+  matchExceptions   MatchException[]
+  paymentBatchLines PaymentBatchLine[]
 
   @@index([orgId])
   @@index([orgId, status])
@@ -528,6 +539,89 @@ model MatchException {
   @@index([orgId])
   @@index([orgId, status])
   @@map("match_exceptions")
+}
+
+enum PaymentBatchStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  RELEASED
+  CANCELLED
+}
+
+/// A payment run (P2P-060): groups one or more APPROVED_FOR_PAYMENT
+/// invoices with the amount to pay against each (PaymentBatchLine),
+/// supporting both partial payment of a single invoice and one release
+/// covering several. Batches above PAYMENT_BATCH_APPROVAL_THRESHOLD need a
+/// Controller/Admin approval before they can be released (P2P-061) —
+/// release() re-checks that independently of status, per its AC.
+model PaymentBatch {
+  id                    String             @id @default(cuid())
+  orgId                 String
+  status                PaymentBatchStatus @default(DRAFT)
+  totalAmountMinorUnits Int                @default(0)
+  currency              String             @default("INR")
+  method                String?
+  referenceNumber       String?
+  paymentDate           DateTime?
+  createdById           String
+  approvedById          String?
+  approvedAt            DateTime?
+  releasedById          String?
+  releasedAt            DateTime?
+  clearedAt             DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  org                Org                 @relation(fields: [orgId], references: [id])
+  createdBy          User                @relation("PaymentBatchCreatedBy", fields: [createdById], references: [id])
+  approvedBy         User?               @relation("PaymentBatchApprovedBy", fields: [approvedById], references: [id])
+  releasedBy         User?               @relation("PaymentBatchReleasedBy", fields: [releasedById], references: [id])
+  lines              PaymentBatchLine[]
+  bankStatementLines BankStatementLine[]
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@map("payment_batches")
+}
+
+model PaymentBatchLine {
+  id               String @id @default(cuid())
+  orgId            String
+  paymentBatchId   String
+  invoiceId        String
+  amountMinorUnits Int
+
+  paymentBatch PaymentBatch @relation(fields: [paymentBatchId], references: [id])
+  invoice      Invoice      @relation(fields: [invoiceId], references: [id])
+
+  @@index([orgId])
+  @@index([paymentBatchId])
+  @@index([invoiceId])
+  @@map("payment_batch_lines")
+}
+
+/// One imported bank statement row (P2P-063), manually reconciled against
+/// a released PaymentBatch — matching sets the batch's clearedAt.
+model BankStatementLine {
+  id                    String    @id @default(cuid())
+  orgId                 String
+  transactionDate       DateTime
+  description           String
+  amountMinorUnits      Int
+  reference             String?
+  matchedPaymentBatchId String?
+  matchedById           String?
+  matchedAt             DateTime?
+  createdAt             DateTime  @default(now())
+
+  org                 Org           @relation(fields: [orgId], references: [id])
+  matchedPaymentBatch PaymentBatch? @relation(fields: [matchedPaymentBatchId], references: [id])
+  matchedBy           User?         @relation(fields: [matchedById], references: [id])
+
+  @@index([orgId])
+  @@index([orgId, matchedPaymentBatchId])
+  @@map("bank_statement_lines")
 }
 
 /// Append-only, polymorphic audit trail (P2P-004). Never updated or deleted —
