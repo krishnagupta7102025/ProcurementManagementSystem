@@ -6,6 +6,7 @@ import { AppService } from './app.service.js';
 import { ApprovalModule } from './approval/approval.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CostCenterModule } from './cost-center/cost-center.module.js';
 import { EmailModule } from './email/email.module.js';
 import { GoodsReceiptModule } from './goods-receipt/goods-receipt.module.js';
 import { InvoiceModule } from './invoice/invoice.module.js';
@@ -31,6 +32,7 @@ import { VendorModule } from './vendor/vendor.module.js';
     EmailModule,
     NotificationsModule,
     VendorModule,
+    CostCenterModule,
     ApprovalModule,
     RequisitionModule,
     PurchaseOrderModule,
