@@ -3,6 +3,7 @@ import {
   IsArray,
   IsISO8601,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -26,6 +27,17 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsISO8601()
   dueDate?: string;
+
+  // Defaults to the org's base currency (see InvoiceService.create()).
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  // Required only when `currency` differs from the org's base currency
+  // (P2P-080) — manual entry, never guessed.
+  @IsOptional()
+  @IsNumber()
+  fxRateToBase?: number;
 
   @IsInt()
   @Min(0)

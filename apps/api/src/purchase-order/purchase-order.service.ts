@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { AuditService } from '../audit/audit.service.js';
+import { convertToBaseCurrency } from '../common/fx.util.js';
 import { EMAIL_SERVICE, type EmailService } from '../email/email.interface.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { forOrg, type ScopedPrismaClient } from '../prisma/scoped-prisma.js';
@@ -39,6 +40,15 @@ export class PurchaseOrderService {
       0,
     );
 
+    const org = await this.prisma.org.findUniqueOrThrow({ where: { id: orgId } });
+    const currency = dto.currency ?? org.baseCurrency;
+    const { fxRateToBase, baseCurrencyTotalMinorUnits } = convertToBaseCurrency(
+      currency,
+      org.baseCurrency,
+      negotiatedTotalMinorUnits,
+      dto.fxRateToBase,
+    );
+
     const po = await client.purchaseOrder.create({
       data: {
         vendorId: dto.vendorId,
@@ -47,6 +57,9 @@ export class PurchaseOrderService {
         billToAddress: dto.billToAddress,
         shipToAddress: dto.shipToAddress,
         negotiatedTotalMinorUnits,
+        currency,
+        fxRateToBase,
+        baseCurrencyTotalMinorUnits,
       } as never,
     });
 

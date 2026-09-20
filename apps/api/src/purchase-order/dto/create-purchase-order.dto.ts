@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsISO8601,
+  IsNumber,
   IsOptional,
   IsString,
   MinLength,
@@ -21,6 +22,17 @@ export class CreatePurchaseOrderDto {
   @ValidateNested({ each: true })
   @Type(() => POLineDto)
   lines!: POLineDto[];
+
+  // Defaults to the org's base currency (see PurchaseOrderService.create()).
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  // Required only when `currency` differs from the org's base currency
+  // (P2P-080) — manual entry, never guessed.
+  @IsOptional()
+  @IsNumber()
+  fxRateToBase?: number;
 
   @IsOptional()
   @IsISO8601()

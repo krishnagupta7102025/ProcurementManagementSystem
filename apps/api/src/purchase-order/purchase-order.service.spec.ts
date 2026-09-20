@@ -111,6 +111,67 @@ describe('PurchaseOrderService (P2P-030..032)', () => {
     expect(po.lines[0].requisitionAllocs[0].requisitionLineId).toBe(line.id);
   });
 
+  it('defaults currency to the org base currency with an implicit rate of 1', async () => {
+    const { line } = await createApprovedRequisitionLine(1, 100);
+    const po = await service().create(org.id, buyer.id, {
+      vendorId: vendor.id,
+      lines: [
+        {
+          description: 'Widget',
+          quantity: 1,
+          unit: 'unit',
+          unitPriceMinorUnits: 100,
+          allocations: [{ requisitionLineId: line.id, quantity: 1 }],
+        },
+      ],
+    });
+
+    expect(po.currency).toBe('INR');
+    expect(po.fxRateToBase).toBe(1);
+    expect(po.baseCurrencyTotalMinorUnits).toBe(100);
+  });
+
+  it('converts a foreign-currency PO to the base currency using the given rate (P2P-080)', async () => {
+    const { line } = await createApprovedRequisitionLine(1, 100);
+    const po = await service().create(org.id, buyer.id, {
+      vendorId: vendor.id,
+      currency: 'USD',
+      fxRateToBase: 83,
+      lines: [
+        {
+          description: 'Widget',
+          quantity: 1,
+          unit: 'unit',
+          unitPriceMinorUnits: 100,
+          allocations: [{ requisitionLineId: line.id, quantity: 1 }],
+        },
+      ],
+    });
+
+    expect(po.currency).toBe('USD');
+    expect(po.fxRateToBase).toBe(83);
+    expect(po.baseCurrencyTotalMinorUnits).toBe(8300);
+  });
+
+  it('rejects a foreign-currency PO with no rate given', async () => {
+    const { line } = await createApprovedRequisitionLine(1, 100);
+    await expect(
+      service().create(org.id, buyer.id, {
+        vendorId: vendor.id,
+        currency: 'USD',
+        lines: [
+          {
+            description: 'Widget',
+            quantity: 1,
+            unit: 'unit',
+            unitPriceMinorUnits: 100,
+            allocations: [{ requisitionLineId: line.id, quantity: 1 }],
+          },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rejects creating a PO against a vendor that is not ACTIVE', async () => {
     const { line } = await createApprovedRequisitionLine(1, 100);
     await expect(

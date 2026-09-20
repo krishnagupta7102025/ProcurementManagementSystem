@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service.js';
+import { convertToBaseCurrency } from '../common/fx.util.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { forOrg, type ScopedPrismaClient } from '../prisma/scoped-prisma.js';
 import type { CreateInvoiceDto } from './dto/create-invoice.dto.js';
@@ -84,15 +85,27 @@ export class InvoiceService {
       );
     }
 
+    const org = await this.prisma.org.findUniqueOrThrow({ where: { id: orgId } });
+    const currency = dto.currency ?? org.baseCurrency;
+    const { fxRateToBase, baseCurrencyTotalMinorUnits } = convertToBaseCurrency(
+      currency,
+      org.baseCurrency,
+      totalMinorUnits,
+      dto.fxRateToBase,
+    );
+
     const invoice = await client.invoice.create({
       data: {
         vendorId: dto.vendorId,
         invoiceNumber: dto.invoiceNumber,
         invoiceDate: new Date(dto.invoiceDate),
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+        currency,
         taxMinorUnits: dto.taxMinorUnits,
         subtotalMinorUnits,
         totalMinorUnits,
+        fxRateToBase,
+        baseCurrencyTotalMinorUnits,
         createdById: actorId,
       } as never,
     });

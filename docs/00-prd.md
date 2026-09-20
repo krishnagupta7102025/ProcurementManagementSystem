@@ -1,8 +1,8 @@
 # Losung360 Procure-to-Pay (P2P) — Product Requirements Document
 
-**Status:** Draft v1
+**Status:** Draft v1 — Phase 0 implementation complete
 **Document Owner:** Krishna Gupta
-**Last Updated:** 2026-09-16
+**Last Updated:** 2026-09-20
 
 ## 1. Product Vision
 
@@ -241,10 +241,12 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
 
 ## 10. Phasing
 
-- **Phase 0 (this build):** Full P2P loop end-to-end — requisition, approval, PO,
+- **Phase 0 (complete):** Full P2P loop end-to-end — requisition, approval, PO,
   GRN, invoice entry (manual), 2-way/3-way match, payment tracking (status only, no
-  bank API), CSV GL export, vendor master, audit trail. See
-  [10-phase-0-tickets.md](10-phase-0-tickets.md).
+  bank API), CSV GL export, vendor master, audit trail, basic multi-currency, and a
+  demo seed script. See [10-phase-0-tickets.md](10-phase-0-tickets.md) — every
+  ticket implemented and tested except the frontend UI tickets (P2P-024), which are
+  blocked on a real Central Login integration (open question below).
 - **Phase 1:** Invoice OCR/auto-extraction, vendor self-service portal, parallel/quorum
   approvals, native accounting-system API sync, spend analytics dashboards.
 - **Phase 2+:** Payment initiation via bank/payment-gateway API, sourcing/RFQ,
@@ -256,7 +258,8 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
 1. **Target accounting system for GL sync** — Tally, Zoho Books, QuickBooks, or
    something else? Determines Phase 1+ integration design. _(Owner: Krishna Gupta)_
 2. **FX rate source** for multi-currency conversion (manual entry vs. an API like
-   exchangerate.host / a bank feed)?
+   exchangerate.host / a bank feed)? Phase 0 implements manual entry per the default
+   above (P2P-080) — this question is about whether Phase 1+ should automate it.
 3. **Payment initiation** — is there an appetite to integrate a bank API / payment
    gateway in a later phase, or will actual fund transfer always stay outside this
    system?

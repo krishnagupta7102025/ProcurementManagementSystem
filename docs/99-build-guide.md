@@ -101,3 +101,10 @@ All tickets in [10-phase-0-tickets.md](10-phase-0-tickets.md) implemented and te
 the P2P-082 end-to-end happy-path test passing in CI, and every open question in
 [00-prd.md](00-prd.md) §11 either answered (PRD updated) or explicitly deferred with a
 noted owner.
+
+**Status: met**, except P2P-024 (the requisition/approvals frontend UI), which is
+blocked on a real Central Login integration rather than a Phase 0 gap — see
+[00-prd.md](00-prd.md) §11. Everything else — Epics A through I — is implemented,
+tested (105 vitest tests against a live Postgres, including the P2P-082 happy-path
+suite at `apps/api/src/e2e/happy-path.spec.ts`), and a demo seed script
+(`pnpm --filter api run db:seed`) walks the full chain for local dev/demos.

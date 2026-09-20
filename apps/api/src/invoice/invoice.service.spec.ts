@@ -73,6 +73,42 @@ describe('InvoiceService (P2P-050..052)', () => {
     expect(invoice.subtotalMinorUnits).toBe(1000);
     expect(invoice.totalMinorUnits).toBe(1050);
     expect(invoice.status).toBe('DRAFT');
+    expect(invoice.currency).toBe('INR');
+    expect(invoice.fxRateToBase).toBe(1);
+    expect(invoice.baseCurrencyTotalMinorUnits).toBe(1050);
+  });
+
+  it('converts a foreign-currency invoice to the base currency using the given rate (P2P-080)', async () => {
+    const { line } = await createReceivablePoLine(1, 100);
+    const invoice = await service.create(org.id, ap.id, {
+      vendorId: vendor.id,
+      invoiceNumber: `FX-${Date.now()}`,
+      invoiceDate: new Date().toISOString(),
+      currency: 'USD',
+      fxRateToBase: 83,
+      taxMinorUnits: 0,
+      lines: [{ poLineId: line.id, description: 'Widget', quantity: 1, unitPriceMinorUnits: 100 }],
+    });
+
+    expect(invoice.currency).toBe('USD');
+    expect(invoice.fxRateToBase).toBe(83);
+    expect(invoice.baseCurrencyTotalMinorUnits).toBe(8300);
+  });
+
+  it('rejects a foreign-currency invoice with no rate given', async () => {
+    const { line } = await createReceivablePoLine(1, 100);
+    await expect(
+      service.create(org.id, ap.id, {
+        vendorId: vendor.id,
+        invoiceNumber: `NOFX-${Date.now()}`,
+        invoiceDate: new Date().toISOString(),
+        currency: 'USD',
+        taxMinorUnits: 0,
+        lines: [
+          { poLineId: line.id, description: 'Widget', quantity: 1, unitPriceMinorUnits: 100 },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('blocks an exact duplicate (same vendor + number + total), but only flags a same-number-different-amount as a warning', async () => {

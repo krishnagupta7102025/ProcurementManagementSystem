@@ -13,10 +13,13 @@ datasource db {
 /// A Losung360 tenant. Every other table is scoped by orgId — see
 /// src/prisma/scoped-prisma.ts for the enforcement mechanism (P2P-002 AC).
 model Org {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  // P2P-080: the currency PO/Invoice amounts convert into for reporting.
+  // FX source (manual vs. an API) is still an open question — §11.
+  baseCurrency String   @default("INR")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   users              User[]
   costCenters        CostCenter[]
@@ -235,20 +238,27 @@ enum POStatus {
 /// one RequisitionLine via POLineRequisitionLine — see that model. Money
 /// is integer minor units per CLAUDE.md convention.
 model PurchaseOrder {
-  id                        String    @id @default(cuid())
-  orgId                     String
-  vendorId                  String
-  buyerId                   String
-  status                    POStatus  @default(DRAFT)
-  negotiatedTotalMinorUnits Int       @default(0)
-  currency                  String    @default("INR")
-  deliveryDate              DateTime?
-  billToAddress             String?
-  shipToAddress             String?
-  pdfS3Key                  String?
-  sentToVendorAt            DateTime?
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  id                          String    @id @default(cuid())
+  orgId                       String
+  vendorId                    String
+  buyerId                     String
+  status                      POStatus  @default(DRAFT)
+  negotiatedTotalMinorUnits   Int       @default(0)
+  currency                    String    @default("INR")
+  // P2P-080: rate captured at PO creation (manual entry, org.baseCurrency
+  // per unit of `currency`) and the resulting converted total — always
+  // populated (rate defaults to 1 when currency === org.baseCurrency) so
+  // reporting can sum baseCurrencyTotalMinorUnits without null-handling.
+  // Nullable only because pre-migration rows have neither.
+  fxRateToBase                Float?
+  baseCurrencyTotalMinorUnits Int?
+  deliveryDate                DateTime?
+  billToAddress               String?
+  shipToAddress               String?
+  pdfS3Key                    String?
+  sentToVendorAt              DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
 
   org           Org            @relation(fields: [orgId], references: [id])
   vendor        Vendor         @relation(fields: [vendorId], references: [id])
@@ -460,31 +470,35 @@ enum InvoiceStatus {
 /// ocrExtractedData is a Phase 1 stub: schema is ready, nothing writes to
 /// it yet (see docs/10-phase-0-tickets.md P2P-050).
 model Invoice {
-  id                   String        @id @default(cuid())
-  orgId                String
-  vendorId             String
-  invoiceNumber        String
-  invoiceDate          DateTime
-  dueDate              DateTime?
-  currency             String        @default("INR")
-  subtotalMinorUnits   Int           @default(0)
-  taxMinorUnits        Int           @default(0)
-  totalMinorUnits      Int           @default(0)
+  id                          String        @id @default(cuid())
+  orgId                       String
+  vendorId                    String
+  invoiceNumber               String
+  invoiceDate                 DateTime
+  dueDate                     DateTime?
+  currency                    String        @default("INR")
+  subtotalMinorUnits          Int           @default(0)
+  taxMinorUnits               Int           @default(0)
+  totalMinorUnits             Int           @default(0)
+  // P2P-080: same convention as PurchaseOrder — always populated going
+  // forward (rate defaults to 1 when currency === org.baseCurrency).
+  fxRateToBase                Float?
+  baseCurrencyTotalMinorUnits Int?
   // Incremented as PaymentBatches covering this invoice are released
   // (P2P-062) — status becomes PAID once this reaches totalMinorUnits;
   // partial payments leave it at APPROVED_FOR_PAYMENT.
-  paidAmountMinorUnits Int           @default(0)
-  status               InvoiceStatus @default(DRAFT)
-  ocrExtractedData     Json?
-  fileS3Key            String?
-  createdById          String
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  paidAmountMinorUnits        Int           @default(0)
+  status                      InvoiceStatus @default(DRAFT)
+  ocrExtractedData            Json?
+  fileS3Key                   String?
+  createdById                 String
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
   // Set once by submit() — the actual "submission" timestamp for the
   // invoice-to-payment cycle-time metric (P2P-071), distinct from
   // createdAt (which is when the draft was first entered, possibly much
   // earlier than submission).
-  submittedAt          DateTime?
+  submittedAt                 DateTime?
 
   org               Org                @relation(fields: [orgId], references: [id])
   vendor            Vendor             @relation(fields: [vendorId], references: [id])

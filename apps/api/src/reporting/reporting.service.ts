@@ -29,6 +29,14 @@ export class ReportingService {
       include: { vendor: true },
     });
 
+    // Summed in the org's base currency (P2P-080) — POs can be in
+    // different transaction currencies, so raw negotiatedTotalMinorUnits
+    // isn't safe to add across them. Pre-migration rows fall back to their
+    // transaction total (implicitly assuming base currency, since they
+    // predate multi-currency support).
+    const baseAmount = (po: (typeof openPos)[number]) =>
+      po.baseCurrencyTotalMinorUnits ?? po.negotiatedTotalMinorUnits;
+
     const byVendor = new Map<
       string,
       { vendorId: string; vendorName: string; totalMinorUnits: number }
@@ -39,12 +47,12 @@ export class ReportingService {
         vendorName: po.vendor.legalName,
         totalMinorUnits: 0,
       };
-      entry.totalMinorUnits += po.negotiatedTotalMinorUnits;
+      entry.totalMinorUnits += baseAmount(po);
       byVendor.set(po.vendorId, entry);
     }
 
     return {
-      totalMinorUnits: openPos.reduce((sum, po) => sum + po.negotiatedTotalMinorUnits, 0),
+      totalMinorUnits: openPos.reduce((sum, po) => sum + baseAmount(po), 0),
       poCount: openPos.length,
       byVendor: [...byVendor.values()],
     };
@@ -59,7 +67,11 @@ export class ReportingService {
     const now = Date.now();
 
     for (const invoice of invoices) {
-      const outstanding = invoice.totalMinorUnits - invoice.paidAmountMinorUnits;
+      const outstandingTxn = invoice.totalMinorUnits - invoice.paidAmountMinorUnits;
+      // Converted using the invoice's own stored rate (P2P-080) — assumes
+      // the rate hasn't moved since entry, a reasonable Phase 0
+      // simplification given FX rates are manual entry to begin with.
+      const outstanding = Math.round(outstandingTxn * (invoice.fxRateToBase ?? 1));
       const daysOverdue = invoice.dueDate
         ? Math.floor((now - invoice.dueDate.getTime()) / DAY_MS)
         : -1;

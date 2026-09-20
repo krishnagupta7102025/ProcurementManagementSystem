@@ -13,6 +13,7 @@ const CSV_HEADER = [
   'subtotalMinorUnits',
   'taxMinorUnits',
   'totalMinorUnits',
+  'baseCurrencyTotalMinorUnits',
   'status',
   'invoiceDate',
 ];
@@ -78,6 +79,7 @@ export class GlExportService {
       invoice.subtotalMinorUnits,
       invoice.taxMinorUnits,
       invoice.totalMinorUnits,
+      invoice.baseCurrencyTotalMinorUnits ?? invoice.totalMinorUnits,
       invoice.status,
       invoice.invoiceDate.toISOString().slice(0, 10),
     ]);
