@@ -13,6 +13,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { PaymentModule } from './payment/payment.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { PurchaseOrderModule } from './purchase-order/purchase-order.module.js';
+import { ReportingModule } from './reporting/reporting.module.js';
 import { RequisitionModule } from './requisition/requisition.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { UserModule } from './user/user.module.js';
@@ -36,6 +37,7 @@ import { VendorModule } from './vendor/vendor.module.js';
     GoodsReceiptModule,
     InvoiceModule,
     PaymentModule,
+    ReportingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

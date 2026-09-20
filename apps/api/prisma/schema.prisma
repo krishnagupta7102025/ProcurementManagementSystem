@@ -480,6 +480,11 @@ model Invoice {
   createdById          String
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  // Set once by submit() — the actual "submission" timestamp for the
+  // invoice-to-payment cycle-time metric (P2P-071), distinct from
+  // createdAt (which is when the draft was first entered, possibly much
+  // earlier than submission).
+  submittedAt          DateTime?
 
   org               Org                @relation(fields: [orgId], references: [id])
   vendor            Vendor             @relation(fields: [vendorId], references: [id])

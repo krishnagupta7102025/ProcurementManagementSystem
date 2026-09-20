@@ -196,7 +196,10 @@ export class InvoiceService {
       throw new BadRequestException('Cannot submit an invoice with no lines linked to a PO');
     }
 
-    await client.invoice.update({ where: { id }, data: { status: 'SUBMITTED' } });
+    await client.invoice.update({
+      where: { id },
+      data: { status: 'SUBMITTED', submittedAt: new Date() },
+    });
 
     const result = await this.matching.match(orgId, id);
 
