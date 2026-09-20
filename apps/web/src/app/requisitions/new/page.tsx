@@ -106,7 +106,7 @@ export default function NewRequisitionPage() {
 
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Line items</h2>
+              <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300">Line items</h2>
               <Button type="button" variant="secondary" onClick={addLine}>
                 Add line
               </Button>
@@ -114,7 +114,7 @@ export default function NewRequisitionPage() {
 
             <div className="space-y-3">
               {lines.map((line, index) => (
-                <div key={index} className="grid gap-3 rounded-lg border border-zinc-200 p-3 sm:grid-cols-12 dark:border-zinc-800">
+                <div key={index} className="grid gap-3 rounded-lg border border-stone-200 p-3 sm:grid-cols-12 dark:border-stone-800">
                   <div className="sm:col-span-5">
                     <Field label="Description">
                       <Input

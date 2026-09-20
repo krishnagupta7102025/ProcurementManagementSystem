@@ -85,7 +85,7 @@ export default function NewPaymentBatchPage() {
           </Table>
 
           <Card className="mt-4 flex items-center justify-between">
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">{selected.size} invoice(s) selected</span>
+            <span className="text-sm text-stone-600 dark:text-stone-400">{selected.size} invoice(s) selected</span>
             <Button onClick={handleCreate} disabled={selected.size === 0 || submitting}>
               {submitting ? 'Creating…' : 'Create batch'}
             </Button>

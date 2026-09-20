@@ -106,18 +106,18 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Status</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Status</div>
           <div className="mt-1">
             <StatusBadge status={po.status} />
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Negotiated total</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{formatMoney(po.negotiatedTotalMinorUnits, po.currency)}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Negotiated total</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{formatMoney(po.negotiatedTotalMinorUnits, po.currency)}</div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Sent to vendor</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{po.sentToVendorAt ? formatDate(po.sentToVendorAt) : 'Not yet'}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Sent to vendor</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{po.sentToVendorAt ? formatDate(po.sentToVendorAt) : 'Not yet'}</div>
         </Card>
       </div>
 
@@ -137,7 +137,7 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
         </Card>
       )}
 
-      <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Lines</h2>
+      <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Lines</h2>
       <Table>
         <thead>
           <tr>
@@ -165,11 +165,11 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
 
       {serviceLines.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Service confirmations</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-stone-700 dark:text-stone-300">Service confirmations</h2>
           <Card className="space-y-2">
             {serviceLines.map((line) => (
-              <div key={line.id} className="flex items-center justify-between border-b border-zinc-100 pb-2 last:border-0 last:pb-0 dark:border-zinc-800">
-                <span className="text-sm text-zinc-700 dark:text-zinc-300">{line.description}</span>
+              <div key={line.id} className="flex items-center justify-between border-b border-stone-100 pb-2 last:border-0 last:pb-0 dark:border-stone-800">
+                <span className="text-sm text-stone-700 dark:text-stone-300">{line.description}</span>
                 <Button variant="secondary" onClick={() => confirmService(line.id)} disabled={busy}>
                   Confirm delivered
                 </Button>
@@ -181,24 +181,24 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
 
       {receivableLines.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Goods receipts</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-stone-700 dark:text-stone-300">Goods receipts</h2>
           <Card className="mb-4 space-y-3">
             {receipts && receipts.length > 0 ? (
               <div className="space-y-2">
                 {receipts.map((grn) => (
-                  <div key={grn.id} className="border-b border-zinc-100 pb-2 text-sm last:border-0 last:pb-0 dark:border-zinc-800">
-                    <span className="text-zinc-500">{formatDate(grn.receivedDate)}</span>{' '}
+                  <div key={grn.id} className="border-b border-stone-100 pb-2 text-sm last:border-0 last:pb-0 dark:border-stone-800">
+                    <span className="text-stone-500">{formatDate(grn.receivedDate)}</span>{' '}
                     {grn.lines.map((l) => `${l.quantityReceived} × ${l.poLine?.description ?? l.poLineId}`).join(', ')}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">No goods received yet.</p>
+              <p className="text-sm text-stone-500">No goods received yet.</p>
             )}
           </Card>
 
           <Card>
-            <h3 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Record a goods receipt</h3>
+            <h3 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Record a goods receipt</h3>
             <form onSubmit={recordGrn} className="grid gap-3 sm:grid-cols-4">
               <Field label="Line">
                 <Select value={grnLineId} onChange={(e) => setGrnLineId(e.target.value)} required>

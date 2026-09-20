@@ -59,8 +59,8 @@ export default function NewVendorPage() {
             <Input type="number" min={0} value={paymentTermsDays} onChange={(e) => setPaymentTermsDays(e.target.value)} />
           </Field>
 
-          <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <p className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">Primary contact (optional)</p>
+          <div className="border-t border-stone-200 pt-4 dark:border-stone-800">
+            <p className="mb-3 text-sm font-medium text-stone-700 dark:text-stone-300">Primary contact (optional)</p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="Name">
                 <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />

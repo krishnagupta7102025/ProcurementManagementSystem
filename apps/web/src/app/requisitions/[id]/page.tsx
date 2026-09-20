@@ -70,30 +70,30 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
 
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Status</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Status</div>
           <div className="mt-1">
             <StatusBadge status={requisition.status} />
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Cost center</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">
+          <div className="text-xs font-medium uppercase text-stone-500">Cost center</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">
             {requisition.costCenter ? `${requisition.costCenter.code} — ${requisition.costCenter.name}` : requisition.costCenterId}
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Estimated total</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">
+          <div className="text-xs font-medium uppercase text-stone-500">Estimated total</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">
             {formatMoney(requisition.estimatedTotalMinorUnits, requisition.currency)}
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Justification</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{requisition.justification ?? '—'}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Justification</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{requisition.justification ?? '—'}</div>
         </Card>
       </div>
 
-      <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Line items</h2>
+      <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Line items</h2>
       <Table>
         <thead>
           <tr>
@@ -119,19 +119,19 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
 
       {requisition.approvalSteps && requisition.approvalSteps.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Approval timeline</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-stone-700 dark:text-stone-300">Approval timeline</h2>
           <Card className="space-y-3">
             {requisition.approvalSteps
               .slice()
               .sort((a, b) => a.stepOrder - b.stepOrder)
               .map((step) => (
-                <div key={step.id} className="flex items-center justify-between border-b border-zinc-100 pb-3 last:border-0 last:pb-0 dark:border-zinc-800">
+                <div key={step.id} className="flex items-center justify-between border-b border-stone-100 pb-3 last:border-0 last:pb-0 dark:border-stone-800">
                   <div>
-                    <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <div className="text-sm font-medium text-stone-800 dark:text-stone-200">
                       Step {step.stepOrder} — {step.approver?.displayName ?? step.approverUserId}
                     </div>
-                    {step.reason && <div className="mt-0.5 text-xs text-zinc-500">{step.reason}</div>}
-                    {step.actedAt && <div className="mt-0.5 text-xs text-zinc-500">Acted {formatDateTime(step.actedAt)}</div>}
+                    {step.reason && <div className="mt-0.5 text-xs text-stone-500">{step.reason}</div>}
+                    {step.actedAt && <div className="mt-0.5 text-xs text-stone-500">Acted {formatDateTime(step.actedAt)}</div>}
                   </div>
                   <StatusBadge status={step.status} />
                 </div>

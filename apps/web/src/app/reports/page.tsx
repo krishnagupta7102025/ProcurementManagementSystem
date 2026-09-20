@@ -31,9 +31,9 @@ interface SlaCompliance {
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <Card>
-      <p className="text-sm font-medium text-zinc-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
-      {sub && <p className="mt-1 text-xs text-zinc-500">{sub}</p>}
+      <p className="text-sm font-medium text-stone-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-50">{value}</p>
+      {sub && <p className="mt-1 text-xs text-stone-500">{sub}</p>}
     </Card>
   );
 }
@@ -76,7 +76,7 @@ export default function ReportsPage() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">AP aging</h2>
+            <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">AP aging</h2>
             <Table>
               <thead>
                 <tr>
@@ -100,7 +100,7 @@ export default function ReportsPage() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Open commitment by vendor</h2>
+            <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Open commitment by vendor</h2>
             {openPo.data && openPo.data.byVendor.length > 0 ? (
               <Table>
                 <thead>

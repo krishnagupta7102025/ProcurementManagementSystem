@@ -1,9 +1,12 @@
 'use client';
 
-import { Card, ErrorBanner, Loading, PageHeader } from '../components/ui';
+import Link from 'next/link';
+import { BanknoteIcon, CheckCircleIcon, ClipboardIcon } from '../components/icons';
+import { Card, ErrorBanner, Loading } from '../components/ui';
 import { formatMoney } from '../lib/format';
 import { useApiData } from '../lib/use-api-data';
 import { useUser } from '../lib/user-context';
+import type { PendingApprovalStep, Requisition } from '../lib/types';
 
 interface OpenPoCommitment {
   totalMinorUnits: number;
@@ -32,15 +35,24 @@ interface SlaCompliance {
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <Card>
-      <p className="text-sm font-medium text-zinc-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
-      {sub && <p className="mt-1 text-xs text-zinc-500">{sub}</p>}
+      <p className="text-sm font-medium text-stone-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-50">{value}</p>
+      {sub && <p className="mt-1 text-xs text-stone-500">{sub}</p>}
     </Card>
   );
 }
 
+const QUICK_LINKS = [
+  { href: '/requisitions/new', label: 'New Requisition', icon: ClipboardIcon },
+  { href: '/approvals', label: 'My Approvals', icon: CheckCircleIcon },
+  { href: '/purchase-orders/new', label: 'New Purchase Order', icon: ClipboardIcon },
+  { href: '/invoices/new', label: 'New Invoice', icon: BanknoteIcon },
+];
+
 export default function DashboardPage() {
   const { user } = useUser();
+  const pendingApprovals = useApiData<PendingApprovalStep[]>('/approvals/pending');
+  const myDrafts = useApiData<Requisition[]>('/requisitions?mine=true&status=DRAFT');
   const openPo = useApiData<OpenPoCommitment>('/reports/open-po-commitment');
   const aging = useApiData<ApAging>('/reports/ap-aging');
   const cycle = useApiData<CycleTime>('/reports/invoice-to-payment-cycle-time');
@@ -54,65 +66,111 @@ export default function DashboardPage() {
   const anyLoading = openPo.loading || aging.loading || cycle.loading || sla.loading;
 
   return (
-    <div>
-      <PageHeader
-        title="Dashboard"
-        subtitle={`Signed in as ${user.label} (${user.role}) — switch users from the top-right at any time.`}
-      />
-
-      {realError && <ErrorBanner message={realError} />}
-      {anyLoading && !realError && <Loading />}
-
-      {forbidden && !anyLoading && (
-        <Card className="mb-6">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Spend and aging reports are only visible to AP, Controller, and Admin users. Switch to{' '}
-            <strong>Amy AP</strong> or <strong>Carl Controller</strong> to see them.
-          </p>
-        </Card>
-      )}
-
-      {!anyLoading && !realError && !forbidden && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat
-            label="Open PO commitment"
-            value={formatMoney(openPo.data?.totalMinorUnits)}
-            sub={`${openPo.data?.poCount ?? 0} open purchase orders`}
-          />
-          <Stat
-            label="AP outstanding (current)"
-            value={formatMoney(aging.data?.current)}
-            sub="Not yet due"
-          />
-          <Stat
-            label="AP outstanding (90+ days)"
-            value={formatMoney(aging.data?.days90Plus)}
-            sub="Overdue — needs attention"
-          />
-          <Stat
-            label="Invoice → payment cycle"
-            value={cycle.data?.averageDays != null ? `${cycle.data.averageDays.toFixed(1)} days avg` : '—'}
-            sub={`${cycle.data?.invoiceCount ?? 0} paid invoices`}
-          />
-          <Stat
-            label="Requisition SLA compliance"
-            value={sla.data?.complianceRate != null ? `${Math.round(sla.data.complianceRate * 100)}%` : '—'}
-            sub={`${sla.data?.compliantCount ?? 0} of ${sla.data?.totalSubmitted ?? 0} submitted`}
-          />
-          <Stat label="AP outstanding (1–30 days)" value={formatMoney(aging.data?.days1To30)} />
-          <Stat label="AP outstanding (31–60 days)" value={formatMoney(aging.data?.days31To60)} />
-          <Stat label="AP outstanding (61–90 days)" value={formatMoney(aging.data?.days61To90)} />
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-orange-50 via-orange-50 to-white p-6 dark:from-orange-500/10 dark:via-orange-500/5 dark:to-transparent">
+        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-50">Welcome back, {user.label.split(' ')[0]}!</h1>
+        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+          Signed in as <strong>{user.label}</strong> ({user.role}) — switch users from the top-right at any time.
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {QUICK_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-2 rounded-xl border border-orange-200/70 bg-white px-3 py-2.5 text-sm font-medium text-stone-800 shadow-sm transition-colors hover:border-orange-400 dark:border-orange-500/20 dark:bg-stone-900 dark:text-stone-100"
+            >
+              <link.icon className="h-4 w-4 shrink-0 text-orange-500" />
+              <span className="truncate">{link.label}</span>
+            </Link>
+          ))}
         </div>
-      )}
+      </div>
 
-      <Card className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Getting started</h2>
-        <ol className="list-inside list-decimal space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-          <li>Switch to <strong>Rita Requester</strong> and raise a new requisition.</li>
-          <li>Switch to <strong>Alan Approver</strong> to approve it under &ldquo;My Approvals&rdquo;.</li>
-          <li>Switch to <strong>Bella Buyer</strong> to turn it into a Purchase Order and issue it.</li>
-          <li>Switch to <strong>Ravi Receiver</strong> to record the goods receipt.</li>
-          <li>Switch to <strong>Amy AP</strong> to enter the vendor invoice, submit it, and release payment.</li>
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Your action items</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card className="flex items-center gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-500/10">
+              <CheckCircleIcon className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-sm text-stone-500">Pending your approval</p>
+              <p className="text-2xl font-bold text-stone-900 dark:text-stone-50">
+                {pendingApprovals.loading ? '…' : (pendingApprovals.data?.length ?? 0)}
+              </p>
+            </div>
+          </Card>
+          <Card className="flex items-center gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 dark:bg-orange-500/10">
+              <ClipboardIcon className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-sm text-stone-500">Your draft requisitions</p>
+              <p className="text-2xl font-bold text-stone-900 dark:text-stone-50">{myDrafts.loading ? '…' : (myDrafts.data?.length ?? 0)}</p>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Overview</h2>
+
+        {realError && <ErrorBanner message={realError} />}
+        {anyLoading && !realError && <Loading />}
+
+        {forbidden && !anyLoading && (
+          <Card>
+            <p className="text-sm text-stone-600 dark:text-stone-400">
+              Spend and aging reports are only visible to AP, Controller, and Admin users. Switch to <strong>Amy AP</strong> or{' '}
+              <strong>Carl Controller</strong> to see them.
+            </p>
+          </Card>
+        )}
+
+        {!anyLoading && !realError && !forbidden && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat
+              label="Open PO commitment"
+              value={formatMoney(openPo.data?.totalMinorUnits)}
+              sub={`${openPo.data?.poCount ?? 0} open purchase orders`}
+            />
+            <Stat label="AP outstanding (current)" value={formatMoney(aging.data?.current)} sub="Not yet due" />
+            <Stat label="AP outstanding (90+ days)" value={formatMoney(aging.data?.days90Plus)} sub="Overdue — needs attention" />
+            <Stat
+              label="Invoice → payment cycle"
+              value={cycle.data?.averageDays != null ? `${cycle.data.averageDays.toFixed(1)} days avg` : '—'}
+              sub={`${cycle.data?.invoiceCount ?? 0} paid invoices`}
+            />
+            <Stat
+              label="Requisition SLA compliance"
+              value={sla.data?.complianceRate != null ? `${Math.round(sla.data.complianceRate * 100)}%` : '—'}
+              sub={`${sla.data?.compliantCount ?? 0} of ${sla.data?.totalSubmitted ?? 0} submitted`}
+            />
+            <Stat label="AP outstanding (1–30 days)" value={formatMoney(aging.data?.days1To30)} />
+            <Stat label="AP outstanding (31–60 days)" value={formatMoney(aging.data?.days31To60)} />
+            <Stat label="AP outstanding (61–90 days)" value={formatMoney(aging.data?.days61To90)} />
+          </div>
+        )}
+      </div>
+
+      <Card>
+        <h2 className="mb-2 text-sm font-semibold text-stone-900 dark:text-stone-50">Getting started</h2>
+        <ol className="list-inside list-decimal space-y-1 text-sm text-stone-600 dark:text-stone-400">
+          <li>
+            Switch to <strong>Rita Requester</strong> and raise a new requisition.
+          </li>
+          <li>
+            Switch to <strong>Alan Approver</strong> to approve it under &ldquo;My Approvals&rdquo;.
+          </li>
+          <li>
+            Switch to <strong>Bella Buyer</strong> to turn it into a Purchase Order and issue it.
+          </li>
+          <li>
+            Switch to <strong>Ravi Receiver</strong> to record the goods receipt.
+          </li>
+          <li>
+            Switch to <strong>Amy AP</strong> to enter the vendor invoice, submit it, and release payment.
+          </li>
         </ol>
       </Card>
     </div>

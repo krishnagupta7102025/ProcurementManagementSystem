@@ -6,7 +6,7 @@ function colorFor(status: string): string {
   if (GREEN.has(status)) return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
   if (AMBER.has(status)) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
   if (RED.has(status)) return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
-  return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
+  return 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300';
 }
 
 export function StatusBadge({ status }: { status: string }) {

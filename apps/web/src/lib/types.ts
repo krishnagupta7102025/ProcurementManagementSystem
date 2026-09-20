@@ -22,6 +22,18 @@ export interface CostCenter {
   code: string;
   name: string;
   department: string;
+  isActive: boolean;
+}
+
+export type UserRole = 'REQUESTER' | 'APPROVER' | 'BUYER' | 'RECEIVER' | 'AP' | 'CONTROLLER' | 'ADMIN';
+
+export interface OrgUser {
+  id: string;
+  email: string;
+  displayName: string;
+  roles: UserRole[];
+  managerId?: string | null;
+  createdAt: string;
 }
 
 export interface RequisitionLine {

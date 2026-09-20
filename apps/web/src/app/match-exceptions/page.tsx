@@ -128,14 +128,14 @@ export default function MatchExceptionsPage() {
           {exceptions.map((exception) => (
             <Card key={exception.id} className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                <div className="font-medium text-stone-900 dark:text-stone-50">
                   {exception.invoice?.vendor?.legalName ?? ''} — invoice {exception.invoice?.invoiceNumber}
                 </div>
                 <StatusBadge status={exception.status} />
               </div>
-              <div className="text-xs text-zinc-500">Raised {formatDate(exception.createdAt)}</div>
+              <div className="text-xs text-stone-500">Raised {formatDate(exception.createdAt)}</div>
 
-              <ul className="list-inside list-disc text-sm text-zinc-600 dark:text-zinc-400">
+              <ul className="list-inside list-disc text-sm text-stone-600 dark:text-stone-400">
                 {exception.diff
                   .filter((d) => !d.ok)
                   .map((d, i) => (
@@ -157,8 +157,8 @@ export default function MatchExceptionsPage() {
               </Field>
 
               {drafts[exception.id] && (
-                <div className="space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-                  <p className="text-xs font-medium uppercase text-zinc-500">Adjust invoice lines</p>
+                <div className="space-y-2 rounded-lg border border-stone-200 p-3 dark:border-stone-800">
+                  <p className="text-xs font-medium uppercase text-stone-500">Adjust invoice lines</p>
                   {drafts[exception.id].map((line, index) => (
                     <div key={line.poLineId} className="grid gap-2 sm:grid-cols-3">
                       <Input value={line.description} disabled />

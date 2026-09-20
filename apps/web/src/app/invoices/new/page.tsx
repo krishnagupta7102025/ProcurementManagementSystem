@@ -153,9 +153,9 @@ export default function NewInvoicePage() {
 
           {lines.length > 0 && (
             <Card className="space-y-3">
-              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Lines to invoice</h2>
+              <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300">Lines to invoice</h2>
               {lines.map((line, index) => (
-                <div key={line.poLineId} className="grid items-end gap-3 rounded-lg border border-zinc-200 p-3 sm:grid-cols-12 dark:border-zinc-800">
+                <div key={line.poLineId} className="grid items-end gap-3 rounded-lg border border-stone-200 p-3 sm:grid-cols-12 dark:border-stone-800">
                   <div className="flex items-center gap-2 sm:col-span-1">
                     <input
                       type="checkbox"

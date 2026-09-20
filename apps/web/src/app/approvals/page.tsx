@@ -53,20 +53,20 @@ export default function ApprovalsPage() {
             <Card key={step.id} className="space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                  <div className="font-medium text-stone-900 dark:text-stone-50">
                     {step.requisition.department} — {formatMoney(step.requisition.estimatedTotalMinorUnits, step.requisition.currency)}
                   </div>
-                  <div className="mt-0.5 text-sm text-zinc-500">
+                  <div className="mt-0.5 text-sm text-stone-500">
                     Requested by {step.requisition.requester?.displayName ?? 'unknown'}
                     {step.becameActiveAt ? ` · waiting since ${formatDateTime(step.becameActiveAt)}` : ''}
                   </div>
                   {step.requisition.justification && (
-                    <div className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{step.requisition.justification}</div>
+                    <div className="mt-2 text-sm text-stone-700 dark:text-stone-300">{step.requisition.justification}</div>
                   )}
                 </div>
               </div>
 
-              <ul className="list-inside list-disc text-sm text-zinc-600 dark:text-zinc-400">
+              <ul className="list-inside list-disc text-sm text-stone-600 dark:text-stone-400">
                 {step.requisition.lines.map((line) => (
                   <li key={line.id}>
                     {line.quantity} × {line.description} ({formatMoney(line.estimatedUnitPriceMinorUnits, step.requisition.currency)} each)

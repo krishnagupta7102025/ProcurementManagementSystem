@@ -66,35 +66,35 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Status</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Status</div>
           <div className="mt-1">
             <StatusBadge status={invoice.status} />
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Subtotal</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{formatMoney(invoice.subtotalMinorUnits, invoice.currency)}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Subtotal</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{formatMoney(invoice.subtotalMinorUnits, invoice.currency)}</div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Tax</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{formatMoney(invoice.taxMinorUnits, invoice.currency)}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Tax</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{formatMoney(invoice.taxMinorUnits, invoice.currency)}</div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Total</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{formatMoney(invoice.totalMinorUnits, invoice.currency)}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Total</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{formatMoney(invoice.totalMinorUnits, invoice.currency)}</div>
         </Card>
       </div>
 
       {invoice.status !== 'VOID' && invoice.status !== 'PAID' && (
         <Card className="mb-6">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Void reason</span>
+            <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">Void reason</span>
             <Input value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder="Used only if you click Void above" />
           </label>
         </Card>
       )}
 
-      <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Lines</h2>
+      <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Lines</h2>
       <Table>
         <thead>
           <tr>
@@ -120,17 +120,17 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
 
       {openExceptions.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Match exceptions</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-stone-700 dark:text-stone-300">Match exceptions</h2>
           <Card className="space-y-4">
             {openExceptions.map((exception) => (
-              <div key={exception.id} className="space-y-2 border-b border-zinc-100 pb-4 last:border-0 last:pb-0 dark:border-zinc-800">
+              <div key={exception.id} className="space-y-2 border-b border-stone-100 pb-4 last:border-0 last:pb-0 dark:border-stone-800">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  <span className="text-sm font-medium text-stone-800 dark:text-stone-200">
                     Raised {formatDate(exception.createdAt)}
                   </span>
                   <StatusBadge status={exception.status} />
                 </div>
-                <ul className="list-inside list-disc text-sm text-zinc-600 dark:text-zinc-400">
+                <ul className="list-inside list-disc text-sm text-stone-600 dark:text-stone-400">
                   {exception.diff
                     .filter((d) => !d.ok)
                     .map((d, i) => (
@@ -141,7 +141,7 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
                       </li>
                     ))}
                 </ul>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-stone-500">
                   Resolve this from the{' '}
                   <a href="/match-exceptions" className="underline">
                     Match Exceptions

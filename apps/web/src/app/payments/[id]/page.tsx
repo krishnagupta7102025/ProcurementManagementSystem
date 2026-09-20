@@ -70,22 +70,22 @@ export default function PaymentBatchDetailPage(props: PageProps<'/payments/[id]'
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Status</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Status</div>
           <div className="mt-1">
             <StatusBadge status={batch.status} />
           </div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Total</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{formatMoney(batch.totalAmountMinorUnits, batch.currency)}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Total</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{formatMoney(batch.totalAmountMinorUnits, batch.currency)}</div>
         </Card>
         <Card>
-          <div className="text-xs font-medium uppercase text-zinc-500">Released</div>
-          <div className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{batch.clearedAt ? formatDate(batch.clearedAt) : 'Not yet'}</div>
+          <div className="text-xs font-medium uppercase text-stone-500">Released</div>
+          <div className="mt-1 text-sm text-stone-800 dark:text-stone-200">{batch.clearedAt ? formatDate(batch.clearedAt) : 'Not yet'}</div>
         </Card>
       </div>
 
-      <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Invoices in this batch</h2>
+      <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Invoices in this batch</h2>
       <Table>
         <thead>
           <tr>
@@ -107,7 +107,7 @@ export default function PaymentBatchDetailPage(props: PageProps<'/payments/[id]'
 
       {batch.status !== 'RELEASED' && batch.status !== 'CANCELLED' && (
         <Card className="mt-6 space-y-4">
-          <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Release payment</h2>
+          <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-300">Release payment</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Method">
               <Input value={method} onChange={(e) => setMethod(e.target.value)} placeholder="NEFT / RTGS / cheque" />

@@ -47,7 +47,7 @@ export default function VendorDetailPage(props: PageProps<'/vendors/[id]'>) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
-          <p className="text-sm font-medium text-zinc-500">Status</p>
+          <p className="text-sm font-medium text-stone-500">Status</p>
           <div className="mt-2">
             <StatusBadge status={vendor.status} />
           </div>
@@ -65,47 +65,47 @@ export default function VendorDetailPage(props: PageProps<'/vendors/[id]'>) {
               <option value="BLACKLISTED">Blacklisted</option>
             </Select>
           </div>
-          <p className="mt-2 text-xs text-zinc-500">Only Buyer/Admin can change vendor status.</p>
+          <p className="mt-2 text-xs text-stone-500">Only Buyer/Admin can change vendor status.</p>
         </Card>
 
         <Card>
-          <p className="text-sm font-medium text-zinc-500">Details</p>
+          <p className="text-sm font-medium text-stone-500">Details</p>
           <dl className="mt-2 space-y-1 text-sm">
             <div className="flex justify-between">
-              <dt className="text-zinc-500">GSTIN</dt>
+              <dt className="text-stone-500">GSTIN</dt>
               <dd>{vendor.gstin ?? '—'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Payment terms</dt>
+              <dt className="text-stone-500">Payment terms</dt>
               <dd>Net {vendor.paymentTermsDays}</dd>
             </div>
           </dl>
         </Card>
 
         <Card>
-          <p className="text-sm font-medium text-zinc-500">Contacts</p>
-          {vendor.contacts.length === 0 && <p className="mt-2 text-sm text-zinc-500">No contacts on file.</p>}
+          <p className="text-sm font-medium text-stone-500">Contacts</p>
+          {vendor.contacts.length === 0 && <p className="mt-2 text-sm text-stone-500">No contacts on file.</p>}
           <ul className="mt-2 space-y-2 text-sm">
             {vendor.contacts.map((c) => (
               <li key={c.id}>
-                <p className="font-medium text-zinc-800 dark:text-zinc-200">{c.name}</p>
-                <p className="text-zinc-500">{[c.email, c.phone].filter(Boolean).join(' · ')}</p>
+                <p className="font-medium text-stone-800 dark:text-stone-200">{c.name}</p>
+                <p className="text-stone-500">{[c.email, c.phone].filter(Boolean).join(' · ')}</p>
               </li>
             ))}
           </ul>
         </Card>
 
         <Card>
-          <p className="text-sm font-medium text-zinc-500">Spend summary</p>
-          {spend.loading && <p className="mt-2 text-sm text-zinc-500">Loading…</p>}
+          <p className="text-sm font-medium text-stone-500">Spend summary</p>
+          {spend.loading && <p className="mt-2 text-sm text-stone-500">Loading…</p>}
           {spend.data && (
             <dl className="mt-2 space-y-1 text-sm">
               <div className="flex justify-between">
-                <dt className="text-zinc-500">Total committed</dt>
+                <dt className="text-stone-500">Total committed</dt>
                 <dd>{formatMoney(spend.data.totalCommittedMinorUnits)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-zinc-500">Total paid</dt>
+                <dt className="text-stone-500">Total paid</dt>
                 <dd>{formatMoney(spend.data.totalPaidMinorUnits)}</dd>
               </div>
             </dl>
