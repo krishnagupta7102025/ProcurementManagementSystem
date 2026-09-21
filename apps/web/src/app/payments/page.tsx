@@ -14,7 +14,14 @@ export default function PaymentsPage() {
       <PageHeader
         title="Payment batches"
         subtitle="Group approved invoices together and release payment."
-        action={<LinkButton href="/payments/new">New payment batch</LinkButton>}
+        action={
+          <div className="flex gap-2">
+            <LinkButton href="/payments/bank-statement" variant="secondary">
+              Reconcile bank statement
+            </LinkButton>
+            <LinkButton href="/payments/new">New payment batch</LinkButton>
+          </div>
+        }
       />
 
       {error && <ErrorBanner message={error} />}

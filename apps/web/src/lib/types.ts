@@ -194,6 +194,16 @@ export interface PaymentBatch {
   createdAt: string;
 }
 
+export interface BankStatementLine {
+  id: string;
+  transactionDate: string;
+  description: string;
+  amountMinorUnits: number;
+  reference?: string | null;
+  matchedPaymentBatchId?: string | null;
+  matchedAt?: string | null;
+}
+
 export interface ApprovalRule {
   id: string;
   name: string;
