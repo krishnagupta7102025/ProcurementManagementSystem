@@ -1,8 +1,11 @@
 'use client';
 
-import { Card, EmptyState, ErrorBanner, Loading, PageHeader, Table, Td, Th, TRow } from '../../components/ui';
+import { useState } from 'react';
+import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Table, Td, Th, TRow } from '../../components/ui';
+import { apiFetchBlob } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
 import { useApiData } from '../../lib/use-api-data';
+import { useUser } from '../../lib/user-context';
 
 interface OpenPoCommitment {
   totalMinorUnits: number;
@@ -39,19 +42,56 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 export default function ReportsPage() {
+  const { user } = useUser();
   const openPo = useApiData<OpenPoCommitment>('/reports/open-po-commitment');
   const aging = useApiData<ApAging>('/reports/ap-aging');
   const cycle = useApiData<CycleTime>('/reports/invoice-to-payment-cycle-time');
   const sla = useApiData<SlaCompliance>('/reports/requisition-sla-compliance');
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const forbidden = [openPo, aging, cycle, sla].some((r) => r.status === 403);
   const realError = !forbidden && (openPo.error || aging.error || cycle.error || sla.error);
   const anyLoading = openPo.loading || aging.loading || cycle.loading || sla.loading;
 
+  // GL export is AP/Admin only — stricter than the read-only reports above,
+  // which Controller can also see — so the button is hidden rather than
+  // left to fail with a 403 on click.
+  const canExportGl = user.role === 'AP' || user.role === 'ADMIN';
+
+  async function downloadGlExport() {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const blob = await apiFetchBlob('/reports/gl-export', user.email);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gl-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Failed to download GL export');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div>
-      <PageHeader title="Reports" subtitle="Spend, aging, and cycle-time metrics across the org." />
+      <PageHeader
+        title="Reports"
+        subtitle="Spend, aging, and cycle-time metrics across the org."
+        action={
+          canExportGl && (
+            <Button variant="secondary" onClick={downloadGlExport} disabled={exporting}>
+              {exporting ? 'Preparing…' : 'Download GL export (CSV)'}
+            </Button>
+          )
+        }
+      />
 
+      {exportError && <ErrorBanner message={exportError} />}
       {realError && <ErrorBanner message={realError} />}
       {forbidden && !anyLoading && (
         <EmptyState>Reports are only visible to AP, Controller, and Admin users. Switch users from the top-right.</EmptyState>

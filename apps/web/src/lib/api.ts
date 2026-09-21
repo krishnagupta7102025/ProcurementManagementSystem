@@ -58,3 +58,8 @@ export async function fetchFileBlob(url: string, userEmail: string): Promise<Blo
   }
   return res.blob();
 }
+
+/** Like fetchFileBlob, but for a path on this API directly (e.g. a CSV export endpoint) rather than a URL handed back in a JSON response. */
+export async function apiFetchBlob(path: string, userEmail: string): Promise<Blob> {
+  return fetchFileBlob(`${API_URL}${path}`, userEmail);
+}
