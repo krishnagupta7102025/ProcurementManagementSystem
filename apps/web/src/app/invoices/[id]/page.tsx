@@ -1,9 +1,10 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useRef, useState } from 'react';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Input, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
-import { apiFetch } from '../../../lib/api';
+import { apiFetch, fetchFileBlob } from '../../../lib/api';
+import { fileToBase64 } from '../../../lib/file';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import { useUser } from '../../../lib/user-context';
@@ -16,6 +17,8 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [voidReason, setVoidReason] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function runAction(path: string, body?: unknown) {
     setActionError(null);
@@ -27,6 +30,40 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
       setActionError(err instanceof Error ? err.message : 'Action failed');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setActionError(null);
+    setUploading(true);
+    try {
+      const base64Content = await fileToBase64(file);
+      await apiFetch(`/invoices/${id}/file`, {
+        method: 'POST',
+        userEmail: user.email,
+        body: { fileName: file.name, contentType: file.type || 'application/octet-stream', base64Content },
+      });
+      await reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to upload document');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  async function viewFile() {
+    setActionError(null);
+    const tab = window.open('', '_blank');
+    try {
+      const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/invoices/${id}/file/download`, { userEmail: user.email });
+      const blob = await fetchFileBlob(downloadUrl, user.email);
+      if (tab) tab.location.href = URL.createObjectURL(blob);
+    } catch (err) {
+      tab?.close();
+      setActionError(err instanceof Error ? err.message : 'Failed to open document');
     }
   }
 
@@ -93,6 +130,24 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
           </label>
         </Card>
       )}
+
+      <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Vendor document</h2>
+      <Card className="mb-8 space-y-3">
+        {invoice.fileS3Key ? (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-stone-700 dark:text-stone-300">A document is attached to this invoice.</span>
+            <Button variant="secondary" onClick={viewFile}>
+              View
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-stone-500">No scanned copy of the vendor&apos;s invoice has been uploaded yet.</p>
+        )}
+        <div>
+          <input ref={fileInputRef} type="file" onChange={handleFileSelected} disabled={uploading} className="text-sm" />
+          {uploading && <p className="mt-1 text-xs text-stone-500">Uploading…</p>}
+        </div>
+      </Card>
 
       <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">Lines</h2>
       <Table>

@@ -55,6 +55,13 @@ export interface ApprovalStep {
   approver?: { displayName: string; email: string };
 }
 
+export interface RequisitionAttachment {
+  id: string;
+  requisitionId: string;
+  fileName: string;
+  createdAt: string;
+}
+
 export interface Requisition {
   id: string;
   status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED' | 'WITHDRAWN';
@@ -67,6 +74,7 @@ export interface Requisition {
   requesterId: string;
   requester?: { displayName: string; email: string };
   lines: RequisitionLine[];
+  attachments?: RequisitionAttachment[];
   approvalSteps?: ApprovalStep[];
   createdAt: string;
 }
@@ -171,6 +179,7 @@ export interface Invoice {
   status: 'DRAFT' | 'SUBMITTED' | 'MATCHED' | 'MATCH_EXCEPTION' | 'APPROVED_FOR_PAYMENT' | 'PAID' | 'VOID';
   lines: InvoiceLine[];
   matchExceptions?: MatchException[];
+  fileS3Key?: string | null;
   createdAt: string;
 }
 

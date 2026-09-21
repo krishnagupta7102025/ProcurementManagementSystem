@@ -1,10 +1,11 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
-import { apiFetch } from '../../../lib/api';
+import { apiFetch, fetchFileBlob } from '../../../lib/api';
+import { fileToBase64 } from '../../../lib/file';
 import { formatDateTime, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import { useUser } from '../../../lib/user-context';
@@ -17,6 +18,8 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
   const { data: requisition, error, loading, reload } = useApiData<Requisition>(`/requisitions/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function runAction(action: 'submit' | 'withdraw' | 'clone') {
     setActionError(null);
@@ -32,6 +35,43 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
       setActionError(err instanceof Error ? err.message : `Failed to ${action} requisition`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setActionError(null);
+    setUploading(true);
+    try {
+      const base64Content = await fileToBase64(file);
+      await apiFetch(`/requisitions/${id}/attachments`, {
+        method: 'POST',
+        userEmail: user.email,
+        body: { fileName: file.name, contentType: file.type || 'application/octet-stream', base64Content },
+      });
+      await reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to upload attachment');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  async function viewAttachment(attachmentId: string) {
+    setActionError(null);
+    const tab = window.open('', '_blank');
+    try {
+      const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(
+        `/requisitions/${id}/attachments/${attachmentId}/download`,
+        { userEmail: user.email },
+      );
+      const blob = await fetchFileBlob(downloadUrl, user.email);
+      if (tab) tab.location.href = URL.createObjectURL(blob);
+    } catch (err) {
+      tab?.close();
+      setActionError(err instanceof Error ? err.message : 'Failed to open attachment');
     }
   }
 
@@ -116,6 +156,28 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
           ))}
         </tbody>
       </Table>
+
+      <h2 className="mb-3 mt-8 text-sm font-semibold text-stone-700 dark:text-stone-300">Attachments</h2>
+      <Card className="space-y-3">
+        {requisition.attachments && requisition.attachments.length > 0 ? (
+          <ul className="space-y-2">
+            {requisition.attachments.map((att) => (
+              <li key={att.id} className="flex items-center justify-between border-b border-stone-100 pb-2 last:border-0 last:pb-0 dark:border-stone-800">
+                <span className="text-sm text-stone-700 dark:text-stone-300">{att.fileName}</span>
+                <Button variant="secondary" onClick={() => viewAttachment(att.id)}>
+                  View
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-stone-500">No supporting documents attached yet.</p>
+        )}
+        <div>
+          <input ref={fileInputRef} type="file" onChange={handleFileSelected} disabled={uploading} className="text-sm" />
+          {uploading && <p className="mt-1 text-xs text-stone-500">Uploading…</p>}
+        </div>
+      </Card>
 
       {requisition.approvalSteps && requisition.approvalSteps.length > 0 && (
         <>
