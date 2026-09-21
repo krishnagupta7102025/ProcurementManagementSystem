@@ -39,3 +39,22 @@ export async function apiFetch<T>(path: string, opts: ApiFetchOptions): Promise<
 
   return data as T;
 }
+
+/**
+ * Fetches a file (PDF, etc.) from a URL a JSON response handed back — e.g.
+ * StorageService.getDownloadUrl(). A plain `<a href>`/`window.open` can't
+ * carry the x-dev-user-email header a normal browser navigation needs, so
+ * callers fetch the bytes here and open them via a blob: URL instead. The
+ * header is only attached when the URL points back at this API (the local
+ * storage dev driver's own download route) — a real S3 presigned URL
+ * authenticates via its query-string signature and lives on a different
+ * origin entirely, so it's fetched as-is.
+ */
+export async function fetchFileBlob(url: string, userEmail: string): Promise<Blob> {
+  const sameOrigin = url.startsWith(API_URL);
+  const res = await fetch(url, sameOrigin ? { headers: { 'x-dev-user-email': userEmail } } : undefined);
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText);
+  }
+  return res.blob();
+}

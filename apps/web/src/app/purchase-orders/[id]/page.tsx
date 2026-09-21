@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select, Table, Td, Textarea, Th, TRow } from '../../../components/ui';
-import { apiFetch } from '../../../lib/api';
+import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import { useUser } from '../../../lib/user-context';
@@ -64,6 +64,28 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
     await reloadReceipts();
   }
 
+  async function viewPdf() {
+    setActionError(null);
+    setBusy(true);
+    // Opened synchronously, before the awaits below, so browsers still treat
+    // it as a direct result of the click — opening it after an await gets
+    // treated as an unrequested popup and blocked by some browsers.
+    const tab = window.open('', '_blank');
+    try {
+      const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/purchase-orders/${id}/pdf`, {
+        method: 'POST',
+        userEmail: user.email,
+      });
+      const blob = await fetchFileBlob(downloadUrl, user.email);
+      if (tab) tab.location.href = URL.createObjectURL(blob);
+    } catch (err) {
+      tab?.close();
+      setActionError(err instanceof Error ? err.message : 'Failed to generate PDF');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) return <Loading />;
   if (error) return <ErrorBanner message={error} />;
   if (!po) return null;
@@ -78,6 +100,9 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
         subtitle={`Created ${formatDate(po.createdAt)}`}
         action={
           <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={viewPdf} disabled={busy}>
+              View PDF
+            </Button>
             {po.status === 'DRAFT' && (
               <Button onClick={() => runAction('/issue')} disabled={busy}>
                 Issue
