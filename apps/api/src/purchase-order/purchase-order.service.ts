@@ -317,6 +317,14 @@ export class PurchaseOrderService {
     return key;
   }
 
+  /** Generates the PDF if it doesn't exist yet, then returns a URL the frontend can link to directly. */
+  async getPdfDownloadUrl(orgId: string, id: string): Promise<{ downloadUrl: string }> {
+    const po = await this.findOne(orgId, id);
+    const key = po.pdfS3Key ?? (await this.generatePdf(orgId, id));
+    const downloadUrl = await this.storage.getDownloadUrl(orgId, key);
+    return { downloadUrl };
+  }
+
   async sendToVendor(orgId: string, actorId: string, id: string, message: string) {
     const client = forOrg(this.prisma, orgId);
     const po = await this.findOne(orgId, id);

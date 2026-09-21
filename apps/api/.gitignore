@@ -3,3 +3,6 @@ node_modules
 .env
 
 /generated/prisma
+
+# STORAGE_DRIVER=local's dev stand-in for S3 (see src/storage/dev-local-storage.ts)
+/.local-storage

@@ -2,8 +2,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { assertDevAuthBypassNotInProduction } from './auth/dev-auth-bypass.js';
+import { assertLocalStorageNotInProduction } from './storage/dev-local-storage.js';
 
 assertDevAuthBypassNotInProduction();
+assertLocalStorageNotInProduction();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

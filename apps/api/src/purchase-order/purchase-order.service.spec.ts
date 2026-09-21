@@ -31,6 +31,7 @@ function fakeStorage() {
     putObject: async (_orgId: string, key: string, body: Uint8Array) => {
       uploaded.set(key, body);
     },
+    getDownloadUrl: async (orgId: string, key: string) => `https://fake-storage.test/${orgId}/${key}`,
     uploaded,
   } as unknown as StorageService & { uploaded: Map<string, Uint8Array> };
 }
@@ -354,6 +355,34 @@ describe('PurchaseOrderService (P2P-030..032)', () => {
     expect(sent.sentToVendorAt).not.toBeNull();
     expect(emails.sent).toHaveLength(1);
     expect(emails.sent[0].to).toBe('vendor@example.test');
+    expect(storage.uploaded.size).toBe(1);
+  });
+
+  it('generates a PDF on first request and reuses it on the next (P2P-032)', async () => {
+    const { line } = await createApprovedRequisitionLine(1, 100);
+    const storage = fakeStorage();
+    const emails = new RecordingEmailService();
+    const svc = new PurchaseOrderService(prisma, audit, storage, emails);
+
+    const po = await svc.create(org.id, buyer.id, {
+      vendorId: vendor.id,
+      lines: [
+        {
+          description: 'Widget',
+          quantity: 1,
+          unit: 'unit',
+          unitPriceMinorUnits: 100,
+          allocations: [{ requisitionLineId: line.id, quantity: 1 }],
+        },
+      ],
+    });
+
+    const first = await svc.getPdfDownloadUrl(org.id, po.id);
+    expect(first.downloadUrl).toContain(org.id);
+    expect(storage.uploaded.size).toBe(1);
+
+    const second = await svc.getPdfDownloadUrl(org.id, po.id);
+    expect(second.downloadUrl).toBe(first.downloadUrl);
     expect(storage.uploaded.size).toBe(1);
   });
 });

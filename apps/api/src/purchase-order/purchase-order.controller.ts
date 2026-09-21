@@ -58,8 +58,8 @@ export class PurchaseOrderController {
 
   @Post(':id/pdf')
   @Roles(Role.BUYER, Role.ADMIN)
-  generatePdf(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.purchaseOrders.generatePdf(user.orgId, id);
+  getPdfDownloadUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.purchaseOrders.getPdfDownloadUrl(user.orgId, id);
   }
 
   @Post(':id/send-to-vendor')
