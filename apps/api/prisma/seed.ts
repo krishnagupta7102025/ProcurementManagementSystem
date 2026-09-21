@@ -18,23 +18,15 @@ import { PaymentBatchService } from '../src/payment/payment-batch.service.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { PurchaseOrderService } from '../src/purchase-order/purchase-order.service.js';
 import { RequisitionService } from '../src/requisition/requisition.service.js';
-import { cleanupOrg } from '../src/test-utils/seed-helpers.js';
+import { cleanupOrg, fakeStorage } from '../src/test-utils/seed-helpers.js';
 import { VendorService } from '../src/vendor/vendor.service.js';
 
 const DEMO_ORG_NAME = 'Losung360 Demo Co';
 
-// Minimal stand-ins for the two integrations Phase 0 doesn't have real
-// providers for yet (S3 upload, outbound email) — same pattern the test
-// suite uses, since PurchaseOrderService needs both but the seed never
-// actually needs a working PDF/email round trip.
-function stubStorage() {
-  return {
-    buildKey: (orgId: string, path: string) => `${orgId}/${path}`,
-    putObject: async () => {},
-    getUploadUrl: async () => '',
-    getDownloadUrl: async () => '',
-  } as never;
-}
+// Minimal stand-in for the one integration Phase 0 doesn't have a real
+// provider for yet (outbound email) — same pattern the test suite uses,
+// since PurchaseOrderService needs it but the seed never actually needs a
+// working email round trip.
 function stubEmail() {
   return { send: async () => {} } as never;
 }
@@ -47,11 +39,11 @@ async function main() {
   const vendors = new VendorService(prisma, audit);
   const approvalRules = new ApprovalRuleService(prisma, audit);
   const approvals = new ApprovalService(prisma, audit, approvalRules);
-  const requisitions = new RequisitionService(prisma, audit, approvals);
-  const purchaseOrders = new PurchaseOrderService(prisma, audit, stubStorage(), stubEmail());
+  const requisitions = new RequisitionService(prisma, audit, approvals, fakeStorage());
+  const purchaseOrders = new PurchaseOrderService(prisma, audit, fakeStorage(), stubEmail());
   const goodsReceipts = new GoodsReceiptService(prisma, audit);
   const matching = new MatchingService(prisma);
-  const invoices = new InvoiceService(prisma, audit, matching);
+  const invoices = new InvoiceService(prisma, audit, matching, fakeStorage());
   const paymentBatches = new PaymentBatchService(prisma, audit);
 
   const existing = await prisma.org.findMany({ where: { name: DEMO_ORG_NAME } });

@@ -8,9 +8,11 @@ import { ApprovalService } from '../approval/approval.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { forOrg, type ScopedPrismaClient } from '../prisma/scoped-prisma.js';
+import { StorageService } from '../storage/storage.service.js';
 import type { CreateRequisitionDto } from './dto/create-requisition.dto.js';
 import type { RequisitionLineDto } from './dto/requisition-line.dto.js';
 import type { UpdateRequisitionDto } from './dto/update-requisition.dto.js';
+import type { UploadAttachmentDto } from './dto/upload-attachment.dto.js';
 
 function estimatedTotal(lines: RequisitionLineDto[]): number {
   return lines.reduce((sum, line) => sum + line.quantity * line.estimatedUnitPriceMinorUnits, 0);
@@ -22,6 +24,7 @@ export class RequisitionService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly approvals: ApprovalService,
+    private readonly storage: StorageService,
   ) {}
 
   private async replaceLines(
@@ -97,6 +100,40 @@ export class RequisitionService {
       throw new NotFoundException(`Requisition ${id} not found`);
     }
     return requisition;
+  }
+
+  /** Any authenticated user who can already view the requisition can attach a supporting document to it. */
+  async addAttachment(orgId: string, actorId: string, requisitionId: string, dto: UploadAttachmentDto) {
+    await this.findOne(orgId, requisitionId); // 404s if it doesn't exist in this org
+    const client = forOrg(this.prisma, orgId);
+
+    const bytes = Buffer.from(dto.base64Content, 'base64');
+    const key = this.storage.buildKey(orgId, `requisitions/${requisitionId}/${Date.now()}-${dto.fileName}`);
+    await this.storage.putObject(orgId, key, bytes, dto.contentType);
+
+    const attachment = await client.requisitionAttachment.create({
+      data: { requisitionId, s3Key: key, fileName: dto.fileName } as never,
+    });
+
+    await this.audit.record(client, {
+      entityType: 'RequisitionAttachment',
+      entityId: attachment.id,
+      action: 'create',
+      actorId,
+      after: attachment,
+    });
+
+    return attachment;
+  }
+
+  async getAttachmentDownloadUrl(orgId: string, requisitionId: string, attachmentId: string) {
+    const client = forOrg(this.prisma, orgId);
+    const attachment = await client.requisitionAttachment.findUnique({ where: { id: attachmentId } });
+    if (!attachment || attachment.requisitionId !== requisitionId) {
+      throw new NotFoundException(`Attachment ${attachmentId} not found on requisition ${requisitionId}`);
+    }
+    const downloadUrl = await this.storage.getDownloadUrl(orgId, attachment.s3Key);
+    return { downloadUrl };
   }
 
   // DRAFT and CHANGES_REQUESTED are both editable — a change request sends

@@ -4,13 +4,13 @@ import { AuditService } from '../audit/audit.service.js';
 import type { EmailMessage, EmailService } from '../email/email.interface.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { forOrg } from '../prisma/scoped-prisma.js';
-import type { StorageService } from '../storage/storage.service.js';
 import {
   cleanupOrg,
   createTestCostCenter,
   createTestOrg,
   createTestUser,
   createTestVendor,
+  fakeStorage,
 } from '../test-utils/seed-helpers.js';
 import { PurchaseOrderService } from './purchase-order.service.js';
 
@@ -19,21 +19,6 @@ class RecordingEmailService implements EmailService {
   async send(message: EmailMessage): Promise<void> {
     this.sent.push(message);
   }
-}
-
-// A test double for StorageService — real S3 credentials aren't configured
-// in this environment, and the point of these tests is PurchaseOrderService
-// logic, not S3 itself (which has its own tests in storage.service.spec.ts).
-function fakeStorage() {
-  const uploaded = new Map<string, Uint8Array>();
-  return {
-    buildKey: (orgId: string, path: string) => `${orgId}/${path}`,
-    putObject: async (_orgId: string, key: string, body: Uint8Array) => {
-      uploaded.set(key, body);
-    },
-    getDownloadUrl: async (orgId: string, key: string) => `https://fake-storage.test/${orgId}/${key}`,
-    uploaded,
-  } as unknown as StorageService & { uploaded: Map<string, Uint8Array> };
 }
 
 describe('PurchaseOrderService (P2P-030..032)', () => {

@@ -9,6 +9,7 @@ import {
   createTestCostCenter,
   createTestOrg,
   createTestUser,
+  fakeStorage,
 } from '../test-utils/seed-helpers.js';
 import { RequisitionService } from './requisition.service.js';
 
@@ -17,7 +18,7 @@ describe('RequisitionService (P2P-020)', () => {
   const audit = new AuditService();
   const rules = new ApprovalRuleService(prisma, audit);
   const approvals = new ApprovalService(prisma, audit, rules);
-  const service = new RequisitionService(prisma, audit, approvals);
+  const service = new RequisitionService(prisma, audit, approvals, fakeStorage());
 
   let org: { id: string };
   let requester: { id: string };
@@ -136,5 +137,26 @@ describe('RequisitionService (P2P-020)', () => {
     expect(cloned.status).toBe('DRAFT');
     expect(cloned.lines).toHaveLength(1);
     expect(cloned.lines[0].description).toBe('Mouse');
+  });
+
+  it('adds a supporting-document attachment and returns a download URL for it', async () => {
+    const req = await service.create(org.id, requester.id, {
+      costCenterId: costCenter.id,
+      department: 'Engineering',
+      lines: [{ description: 'Laptop', quantity: 1, unit: 'unit', estimatedUnitPriceMinorUnits: 150000 }],
+    });
+
+    const attachment = await service.addAttachment(org.id, requester.id, req.id, {
+      fileName: 'quote.pdf',
+      contentType: 'application/pdf',
+      base64Content: Buffer.from('fake pdf bytes').toString('base64'),
+    });
+    expect(attachment.fileName).toBe('quote.pdf');
+
+    const { downloadUrl } = await service.getAttachmentDownloadUrl(org.id, req.id, attachment.id);
+    expect(downloadUrl).toContain(org.id);
+
+    const reloaded = await service.findOne(org.id, req.id);
+    expect(reloaded.attachments).toHaveLength(1);
   });
 });

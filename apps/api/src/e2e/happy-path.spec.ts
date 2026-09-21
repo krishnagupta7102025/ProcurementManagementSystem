@@ -10,13 +10,13 @@ import { PaymentBatchService } from '../payment/payment-batch.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PurchaseOrderService } from '../purchase-order/purchase-order.service.js';
 import { RequisitionService } from '../requisition/requisition.service.js';
-import type { StorageService } from '../storage/storage.service.js';
 import {
   cleanupOrg,
   createTestCostCenter,
   createTestOrg,
   createTestUser,
   createTestVendor,
+  fakeStorage,
 } from '../test-utils/seed-helpers.js';
 import { VendorService } from '../vendor/vendor.service.js';
 
@@ -25,13 +25,6 @@ class RecordingEmailService implements EmailService {
   async send(message: EmailMessage): Promise<void> {
     this.sent.push(message);
   }
-}
-
-function fakeStorage() {
-  return {
-    buildKey: (orgId: string, path: string) => `${orgId}/${path}`,
-    putObject: async () => {},
-  } as unknown as StorageService;
 }
 
 /**
@@ -49,7 +42,7 @@ describe('Full P2P happy path (P2P-082)', () => {
   const vendorsSvc = new VendorService(prisma, audit);
   const approvalRules = new ApprovalRuleService(prisma, audit);
   const approvals = new ApprovalService(prisma, audit, approvalRules);
-  const requisitions = new RequisitionService(prisma, audit, approvals);
+  const requisitions = new RequisitionService(prisma, audit, approvals, fakeStorage());
   const purchaseOrders = new PurchaseOrderService(
     prisma,
     audit,
@@ -58,7 +51,7 @@ describe('Full P2P happy path (P2P-082)', () => {
   );
   const goodsReceipts = new GoodsReceiptService(prisma, audit);
   const matching = new MatchingService(prisma);
-  const invoices = new InvoiceService(prisma, audit, matching);
+  const invoices = new InvoiceService(prisma, audit, matching, fakeStorage());
   const paymentBatches = new PaymentBatchService(prisma, audit);
 
   let org: { id: string };

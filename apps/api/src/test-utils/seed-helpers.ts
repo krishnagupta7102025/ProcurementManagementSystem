@@ -1,9 +1,28 @@
 import type { PrismaService } from '../prisma/prisma.service.js';
+import type { StorageService } from '../storage/storage.service.js';
 
 let counter = 0;
 function unique(prefix: string): string {
   counter += 1;
   return `${prefix}-${Date.now()}-${counter}`;
+}
+
+/**
+ * A test double for StorageService — real S3 credentials aren't configured
+ * in this environment, and most callers' tests care about their own
+ * service's logic, not S3 itself (which has its own tests in
+ * storage.service.spec.ts).
+ */
+export function fakeStorage() {
+  const uploaded = new Map<string, Uint8Array>();
+  return {
+    buildKey: (orgId: string, path: string) => `${orgId}/${path}`,
+    putObject: async (_orgId: string, key: string, body: Uint8Array) => {
+      uploaded.set(key, body);
+    },
+    getDownloadUrl: async (orgId: string, key: string) => `https://fake-storage.test/${orgId}/${key}`,
+    uploaded,
+  } as unknown as StorageService & { uploaded: Map<string, Uint8Array> };
 }
 
 export async function createTestOrg(prisma: PrismaService) {

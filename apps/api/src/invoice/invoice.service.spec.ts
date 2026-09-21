@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AuditService } from '../audit/audit.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -8,6 +8,7 @@ import {
   createTestOrg,
   createTestUser,
   createTestVendor,
+  fakeStorage,
 } from '../test-utils/seed-helpers.js';
 import { InvoiceService } from './invoice.service.js';
 import { MatchingService } from './matching.service.js';
@@ -16,7 +17,7 @@ describe('InvoiceService (P2P-050..052)', () => {
   const prisma = new PrismaService();
   const audit = new AuditService();
   const matching = new MatchingService(prisma);
-  const service = new InvoiceService(prisma, audit, matching);
+  const service = new InvoiceService(prisma, audit, matching, fakeStorage());
 
   let org: { id: string };
   let ap: { id: string };
@@ -227,5 +228,28 @@ describe('InvoiceService (P2P-050..052)', () => {
     await expect(service.void(org.id, ap.id, invoice.id, 'oops')).rejects.toBeInstanceOf(
       ForbiddenException,
     );
+  });
+
+  it('uploads the vendor document and returns a download URL for it', async () => {
+    const { line } = await createReceivablePoLine(1, 100);
+    const invoice = await service.create(org.id, ap.id, {
+      vendorId: vendor.id,
+      invoiceNumber: `DOC-${Date.now()}`,
+      invoiceDate: new Date().toISOString(),
+      taxMinorUnits: 0,
+      lines: [{ poLineId: line.id, description: 'Widget', quantity: 1, unitPriceMinorUnits: 100 }],
+    });
+
+    await expect(service.getFileDownloadUrl(org.id, invoice.id)).rejects.toBeInstanceOf(NotFoundException);
+
+    const updated = await service.uploadFile(org.id, ap.id, invoice.id, {
+      fileName: 'invoice.pdf',
+      contentType: 'application/pdf',
+      base64Content: Buffer.from('fake pdf bytes').toString('base64'),
+    });
+    expect(updated.fileS3Key).toContain('invoice.pdf');
+
+    const { downloadUrl } = await service.getFileDownloadUrl(org.id, invoice.id);
+    expect(downloadUrl).toContain(org.id);
   });
 });

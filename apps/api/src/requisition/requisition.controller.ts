@@ -4,6 +4,7 @@ import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CreateRequisitionDto } from './dto/create-requisition.dto.js';
 import { UpdateRequisitionDto } from './dto/update-requisition.dto.js';
+import { UploadAttachmentDto } from './dto/upload-attachment.dto.js';
 import { RequisitionService } from './requisition.service.js';
 
 @UseGuards(OidcAuthGuard)
@@ -55,5 +56,23 @@ export class RequisitionController {
   @Post(':id/clone')
   clone(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.requisitions.clone(user.orgId, user.localUserId, id);
+  }
+
+  @Post(':id/attachments')
+  addAttachment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UploadAttachmentDto,
+  ) {
+    return this.requisitions.addAttachment(user.orgId, user.localUserId, id, dto);
+  }
+
+  @Get(':id/attachments/:attachmentId/download')
+  getAttachmentDownloadUrl(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('attachmentId') attachmentId: string,
+  ) {
+    return this.requisitions.getAttachmentDownloadUrl(user.orgId, id, attachmentId);
   }
 }

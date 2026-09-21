@@ -8,6 +8,7 @@ import {
   createTestOrg,
   createTestUser,
   createTestVendor,
+  fakeStorage,
 } from '../test-utils/seed-helpers.js';
 import { InvoiceService } from './invoice.service.js';
 import { MatchExceptionService } from './match-exception.service.js';
@@ -17,7 +18,7 @@ describe('MatchExceptionService (P2P-053)', () => {
   const prisma = new PrismaService();
   const audit = new AuditService();
   const matching = new MatchingService(prisma);
-  const invoices = new InvoiceService(prisma, audit, matching);
+  const invoices = new InvoiceService(prisma, audit, matching, fakeStorage());
   const exceptions = new MatchExceptionService(prisma, audit, matching, invoices);
 
   let org: { id: string };

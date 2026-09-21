@@ -8,9 +8,11 @@ import { AuditService } from '../audit/audit.service.js';
 import { convertToBaseCurrency } from '../common/fx.util.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { forOrg, type ScopedPrismaClient } from '../prisma/scoped-prisma.js';
+import { StorageService } from '../storage/storage.service.js';
 import type { CreateInvoiceDto } from './dto/create-invoice.dto.js';
 import type { InvoiceLineDto } from './dto/invoice-line.dto.js';
 import type { UpdateInvoiceDto } from './dto/update-invoice.dto.js';
+import type { UploadInvoiceFileDto } from './dto/upload-file.dto.js';
 import { MatchingService } from './matching.service.js';
 
 // If true, even a clean (auto-matched) invoice needs an explicit AP
@@ -29,6 +31,7 @@ export class InvoiceService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly matching: MatchingService,
+    private readonly storage: StorageService,
   ) {}
 
   /**
@@ -147,6 +150,37 @@ export class InvoiceService {
       throw new NotFoundException(`Invoice ${id} not found`);
     }
     return invoice;
+  }
+
+  /** Attaches the vendor's original invoice document (PDF/image) — replaces any previously uploaded file. */
+  async uploadFile(orgId: string, actorId: string, id: string, dto: UploadInvoiceFileDto) {
+    const client = forOrg(this.prisma, orgId);
+    await this.findOne(orgId, id); // 404s if it doesn't exist in this org
+
+    const bytes = Buffer.from(dto.base64Content, 'base64');
+    const key = this.storage.buildKey(orgId, `invoices/${id}/${dto.fileName}`);
+    await this.storage.putObject(orgId, key, bytes, dto.contentType);
+
+    await client.invoice.update({ where: { id }, data: { fileS3Key: key } });
+
+    await this.audit.record(client, {
+      entityType: 'Invoice',
+      entityId: id,
+      action: 'upload_file',
+      actorId,
+      after: { fileS3Key: key },
+    });
+
+    return this.findOne(orgId, id);
+  }
+
+  async getFileDownloadUrl(orgId: string, id: string) {
+    const invoice = await this.findOne(orgId, id);
+    if (!invoice.fileS3Key) {
+      throw new NotFoundException(`Invoice ${id} has no uploaded file`);
+    }
+    const downloadUrl = await this.storage.getDownloadUrl(orgId, invoice.fileS3Key);
+    return { downloadUrl };
   }
 
   private async requireDraftOwnedByAnyone(orgId: string, id: string) {

@@ -7,6 +7,7 @@ import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Role } from '../generated/prisma/enums.js';
 import { CreateInvoiceDto } from './dto/create-invoice.dto.js';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto.js';
+import { UploadInvoiceFileDto } from './dto/upload-file.dto.js';
 import { InvoiceService } from './invoice.service.js';
 
 @UseGuards(OidcAuthGuard, RolesGuard)
@@ -80,5 +81,20 @@ export class InvoiceController {
     @Body('reason') reason: string,
   ) {
     return this.invoices.void(user.orgId, user.localUserId, id, reason);
+  }
+
+  @Post(':id/file')
+  @Roles(Role.AP, Role.ADMIN)
+  uploadFile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UploadInvoiceFileDto,
+  ) {
+    return this.invoices.uploadFile(user.orgId, user.localUserId, id, dto);
+  }
+
+  @Get(':id/file/download')
+  getFileDownloadUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.invoices.getFileDownloadUrl(user.orgId, id);
   }
 }
