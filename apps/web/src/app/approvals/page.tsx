@@ -5,11 +5,9 @@ import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Textarea } 
 import { apiFetch } from '../../lib/api';
 import { formatDateTime, formatMoney } from '../../lib/format';
 import { useApiData } from '../../lib/use-api-data';
-import { useUser } from '../../lib/user-context';
 import type { PendingApprovalStep } from '../../lib/types';
 
 export default function ApprovalsPage() {
-  const { user } = useUser();
   const { data: steps, error, loading, reload } = useApiData<PendingApprovalStep[]>('/approvals/pending');
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -26,7 +24,6 @@ export default function ApprovalsPage() {
     try {
       await apiFetch(`/approvals/requisitions/${step.requisitionId}/${action}`, {
         method: 'POST',
-        userEmail: user.email,
         body: reason ? { reason } : {},
       });
       await reload();

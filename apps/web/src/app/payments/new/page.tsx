@@ -6,12 +6,10 @@ import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Table, Td, 
 import { apiFetch } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { Invoice, PaymentBatch } from '../../../lib/types';
 
 export default function NewPaymentBatchPage() {
   const router = useRouter();
-  const { user } = useUser();
   const { data: invoices, error, loading } = useApiData<Invoice[]>('/payment-batches/candidate-invoices');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +32,6 @@ export default function NewPaymentBatchPage() {
       const chosen = (invoices ?? []).filter((inv) => selected.has(inv.id));
       const batch = await apiFetch<PaymentBatch>('/payment-batches', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           lines: chosen.map((inv) => ({
             invoiceId: inv.id,

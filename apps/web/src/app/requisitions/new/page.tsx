@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select, Textarea } from '../../../components/ui';
 import { apiFetch } from '../../../lib/api';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { CostCenter, Requisition } from '../../../lib/types';
 
 interface DraftLine {
@@ -21,7 +20,6 @@ function emptyLine(): DraftLine {
 
 export default function NewRequisitionPage() {
   const router = useRouter();
-  const { user } = useUser();
   const { data: costCenters, error: costCenterError, loading: costCentersLoading } = useApiData<CostCenter[]>('/cost-centers');
 
   const [costCenterId, setCostCenterId] = useState('');
@@ -50,7 +48,6 @@ export default function NewRequisitionPage() {
     try {
       const requisition = await apiFetch<Requisition>('/requisitions', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           costCenterId,
           department,

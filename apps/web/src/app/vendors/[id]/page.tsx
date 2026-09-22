@@ -6,7 +6,6 @@ import { StatusBadge } from '../../../components/StatusBadge';
 import { apiFetch, ApiError } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { Vendor } from '../../../lib/types';
 
 interface SpendSummary {
@@ -17,7 +16,6 @@ interface SpendSummary {
 
 export default function VendorDetailPage(props: PageProps<'/vendors/[id]'>) {
   const { id } = use(props.params);
-  const { user } = useUser();
   const { data: vendor, error, loading, reload } = useApiData<Vendor>(`/vendors/${id}`);
   const spend = useApiData<SpendSummary>(`/vendors/${id}/spend-summary`);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -27,7 +25,7 @@ export default function VendorDetailPage(props: PageProps<'/vendors/[id]'>) {
     setUpdating(true);
     setActionError(null);
     try {
-      await apiFetch(`/vendors/${id}/status`, { method: 'PATCH', userEmail: user.email, body: { status } });
+      await apiFetch(`/vendors/${id}/status`, { method: 'PATCH', body: { status } });
       await reload();
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : 'Something went wrong.');

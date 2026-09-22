@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppShell } from '../components/AppShell';
-import { UserProvider } from '../lib/user-context';
+import { AuthProvider } from '../lib/auth-context';
 import './globals.css';
 
 const inter = Inter({
@@ -18,9 +18,9 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full bg-stone-50 dark:bg-stone-950">
-        <UserProvider>
+        <AuthProvider>
           <AppShell>{children}</AppShell>
-        </UserProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { BanknoteIcon, CheckCircleIcon, ClipboardIcon } from '../components/icon
 import { Card, ErrorBanner, Loading } from '../components/ui';
 import { formatMoney } from '../lib/format';
 import { useApiData } from '../lib/use-api-data';
-import { useUser } from '../lib/user-context';
+import { useRequiredUser } from '../lib/auth-context';
 import type { PendingApprovalStep, Requisition } from '../lib/types';
 
 interface OpenPoCommitment {
@@ -50,7 +50,7 @@ const QUICK_LINKS = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
   const pendingApprovals = useApiData<PendingApprovalStep[]>('/approvals/pending');
   const myDrafts = useApiData<Requisition[]>('/requisitions?mine=true&status=DRAFT');
   const openPo = useApiData<OpenPoCommitment>('/reports/open-po-commitment');
@@ -68,9 +68,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-orange-50 via-orange-50 to-white p-6 dark:from-orange-500/10 dark:via-orange-500/5 dark:to-transparent">
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-50">Welcome back, {user.label.split(' ')[0]}!</h1>
+        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-50">Welcome back, {user.displayName.split(' ')[0]}!</h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-          Signed in as <strong>{user.label}</strong> ({user.role}) — switch users from the top-right at any time.
+          Signed in as <strong>{user.displayName}</strong> ({user.roles.join(', ')})
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {QUICK_LINKS.map((link) => (
@@ -121,8 +121,7 @@ export default function DashboardPage() {
         {forbidden && !anyLoading && (
           <Card>
             <p className="text-sm text-stone-600 dark:text-stone-400">
-              Spend and aging reports are only visible to AP, Controller, and Admin users. Switch to <strong>Amy AP</strong> or{' '}
-              <strong>Carl Controller</strong> to see them.
+              Spend and aging reports are only visible to AP, Controller, and Admin users. Log in as one of those to see them.
             </p>
           </Card>
         )}
@@ -155,21 +154,24 @@ export default function DashboardPage() {
 
       <Card>
         <h2 className="mb-2 text-sm font-semibold text-stone-900 dark:text-stone-50">Getting started</h2>
+        <p className="mb-3 text-sm text-stone-600 dark:text-stone-400">
+          Every seeded demo account shares the password <code>Passw0rd!</code> — log out and back in as each one to walk the full flow:
+        </p>
         <ol className="list-inside list-decimal space-y-1 text-sm text-stone-600 dark:text-stone-400">
           <li>
-            Switch to <strong>Rita Requester</strong> and raise a new requisition.
+            Log in as <strong>requester@demo.p2p</strong> (Rita Requester) and raise a new requisition.
           </li>
           <li>
-            Switch to <strong>Alan Approver</strong> to approve it under &ldquo;My Approvals&rdquo;.
+            Log in as <strong>approver@demo.p2p</strong> (Alan Approver) to approve it under &ldquo;My Approvals&rdquo;.
           </li>
           <li>
-            Switch to <strong>Bella Buyer</strong> to turn it into a Purchase Order and issue it.
+            Log in as <strong>buyer@demo.p2p</strong> (Bella Buyer) to turn it into a Purchase Order and issue it.
           </li>
           <li>
-            Switch to <strong>Ravi Receiver</strong> to record the goods receipt.
+            Log in as <strong>receiver@demo.p2p</strong> (Ravi Receiver) to record the goods receipt.
           </li>
           <li>
-            Switch to <strong>Amy AP</strong> to enter the vendor invoice, submit it, and release payment.
+            Log in as <strong>ap@demo.p2p</strong> (Amy AP) to enter the vendor invoice, submit it, and release payment.
           </li>
         </ol>
       </Card>

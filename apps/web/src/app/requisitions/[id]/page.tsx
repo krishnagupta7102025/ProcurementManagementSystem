@@ -8,13 +8,11 @@ import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { fileToBase64 } from '../../../lib/file';
 import { formatDateTime, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { Requisition } from '../../../lib/types';
 
 export default function RequisitionDetailPage(props: PageProps<'/requisitions/[id]'>) {
   const { id } = use(props.params);
   const router = useRouter();
-  const { user } = useUser();
   const { data: requisition, error, loading, reload } = useApiData<Requisition>(`/requisitions/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +23,7 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
     setActionError(null);
     setBusy(true);
     try {
-      const result = await apiFetch<Requisition>(`/requisitions/${id}/${action}`, { method: 'POST', userEmail: user.email });
+      const result = await apiFetch<Requisition>(`/requisitions/${id}/${action}`, { method: 'POST' });
       if (action === 'clone') {
         router.push(`/requisitions/${result.id}`);
       } else {
@@ -47,7 +45,6 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
       const base64Content = await fileToBase64(file);
       await apiFetch(`/requisitions/${id}/attachments`, {
         method: 'POST',
-        userEmail: user.email,
         body: { fileName: file.name, contentType: file.type || 'application/octet-stream', base64Content },
       });
       await reload();
@@ -65,9 +62,9 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
     try {
       const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(
         `/requisitions/${id}/attachments/${attachmentId}/download`,
-        { userEmail: user.email },
+        {},
       );
-      const blob = await fetchFileBlob(downloadUrl, user.email);
+      const blob = await fetchFileBlob(downloadUrl);
       if (tab) tab.location.href = URL.createObjectURL(blob);
     } catch (err) {
       tab?.close();

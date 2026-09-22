@@ -6,7 +6,6 @@ import { Button, Card, EmptyState, ErrorBanner, Field, Input, Loading, PageHeade
 import { apiFetch } from '../../lib/api';
 import { formatDate, formatMoney } from '../../lib/format';
 import { useApiData } from '../../lib/use-api-data';
-import { useUser } from '../../lib/user-context';
 import type { MatchException } from '../../lib/types';
 
 interface DraftLine {
@@ -17,7 +16,6 @@ interface DraftLine {
 }
 
 export default function MatchExceptionsPage() {
-  const { user } = useUser();
   const { data: exceptions, error, loading, reload } = useApiData<MatchException[]>('/match-exceptions?status=OPEN');
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
@@ -54,7 +52,6 @@ export default function MatchExceptionsPage() {
     try {
       await apiFetch(`/match-exceptions/${exception.id}/request-credit-note`, {
         method: 'POST',
-        userEmail: user.email,
         body: { notes: note },
       });
       await reload();
@@ -73,7 +70,6 @@ export default function MatchExceptionsPage() {
     try {
       await apiFetch(`/match-exceptions/${exception.id}/adjust-and-rematch`, {
         method: 'POST',
-        userEmail: user.email,
         body: {
           lines: lines.map((l) => ({
             poLineId: l.poLineId,
@@ -102,7 +98,6 @@ export default function MatchExceptionsPage() {
     try {
       await apiFetch(`/match-exceptions/${exception.id}/manual-override`, {
         method: 'POST',
-        userEmail: user.email,
         body: { reason: note },
       });
       await reload();

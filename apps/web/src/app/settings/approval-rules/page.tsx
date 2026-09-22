@@ -5,7 +5,7 @@ import { Button, Card, EmptyState, ErrorBanner, Field, Input, Loading, PageHeade
 import { apiFetch } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
+import { useRequiredUser } from '../../../lib/auth-context';
 import type { ApprovalRule, CostCenter, OrgUser } from '../../../lib/types';
 
 interface DraftStep {
@@ -17,7 +17,7 @@ function emptyStep(): DraftStep {
 }
 
 export default function ApprovalRulesSettingsPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
   const { data: rules, error, loading, reload } = useApiData<ApprovalRule[]>('/approval-rules');
   const { data: costCenters } = useApiData<CostCenter[]>('/cost-centers');
   const { data: users } = useApiData<OrgUser[]>('/users');
@@ -62,7 +62,6 @@ export default function ApprovalRulesSettingsPage() {
     try {
       await apiFetch('/approval-rules', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           name,
           department: department || undefined,
@@ -93,7 +92,7 @@ export default function ApprovalRulesSettingsPage() {
         subtitle="Routes a submitted requisition to its approvers, based on department, cost center, and amount. A requisition with no matching rule cannot be submitted."
       />
 
-      {user.role === 'ADMIN' && (
+      {user.roles.includes('ADMIN') && (
         <Card className="mb-6">
           <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">New rule</h2>
           {formError && <ErrorBanner message={formError} />}

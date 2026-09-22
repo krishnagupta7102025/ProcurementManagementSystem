@@ -3,8 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { ComponentType, SVGProps } from 'react';
-import { DEMO_USERS } from '../lib/demo-users';
-import { useUser } from '../lib/user-context';
+import { useAuth } from '../lib/auth-context';
 import {
   BanknoteIcon,
   BuildingIcon,
@@ -40,8 +39,20 @@ function initials(name: string): string {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, setUser } = useUser();
+  const { user, ready, logout } = useAuth();
   const pathname = usePathname();
+
+  // The login page renders its own full-page layout with no sidebar/topbar
+  // chrome. Everything else needs a real session — rendering `children`
+  // without one would mount protected pages with user: null before the
+  // AuthProvider's redirect effect has a chance to run, so this shows
+  // nothing instead until either a session is ready or the redirect fires.
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+  if (!ready || !user) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -53,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
         <nav className="space-y-1">
-          {NAV_ITEMS.filter((item) => !item.adminOnly || user.role === 'ADMIN').map((item) => {
+          {NAV_ITEMS.filter((item) => !item.adminOnly || user.roles.includes('ADMIN')).map((item) => {
             const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
@@ -82,26 +93,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-stone-500 sm:inline">Testing as</span>
             <div className="flex items-center gap-2 rounded-full border border-stone-200 bg-white py-1 pl-1 pr-3 dark:border-stone-800 dark:bg-stone-900">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
-                {initials(user.label)}
+                {initials(user.displayName)}
               </span>
-              <select
-                value={user.email}
-                onChange={(e) => {
-                  const next = DEMO_USERS.find((u) => u.email === e.target.value);
-                  if (next) setUser(next);
-                }}
-                className="border-none bg-transparent text-sm font-medium text-stone-900 focus:outline-none dark:text-stone-100"
-              >
-                {DEMO_USERS.map((u) => (
-                  <option key={u.email} value={u.email}>
-                    {u.label} — {u.role}
-                  </option>
-                ))}
-              </select>
+              <div className="leading-tight">
+                <div className="text-sm font-medium text-stone-900 dark:text-stone-100">{user.displayName}</div>
+                <div className="text-[11px] text-stone-500">{user.roles.join(', ')}</div>
+              </div>
             </div>
+            <button
+              onClick={logout}
+              className="rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-900"
+            >
+              Log out
+            </button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">

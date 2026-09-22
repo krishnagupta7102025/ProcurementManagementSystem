@@ -6,7 +6,6 @@ import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select } 
 import { apiFetch } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { PurchaseOrder, Requisition, Vendor } from '../../../lib/types';
 
 interface DraftLine {
@@ -20,7 +19,6 @@ interface DraftLine {
 
 export default function NewPurchaseOrderPage() {
   const router = useRouter();
-  const { user } = useUser();
   const { data: vendors, loading: vendorsLoading } = useApiData<Vendor[]>('/vendors?activeOnly=true');
   const { data: requisitions, loading: requisitionsLoading } = useApiData<Requisition[]>('/requisitions?status=APPROVED');
 
@@ -68,7 +66,6 @@ export default function NewPurchaseOrderPage() {
     try {
       const po = await apiFetch<PurchaseOrder>('/purchase-orders', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           vendorId,
           lines: includedLines.map((line) => ({

@@ -7,12 +7,10 @@ import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { fileToBase64 } from '../../../lib/file';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { Invoice } from '../../../lib/types';
 
 export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
   const { id } = use(props.params);
-  const { user } = useUser();
   const { data: invoice, error, loading, reload } = useApiData<Invoice>(`/invoices/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +22,7 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
     setActionError(null);
     setBusy(true);
     try {
-      await apiFetch(`/invoices/${id}${path}`, { method: 'POST', userEmail: user.email, body: body ?? {} });
+      await apiFetch(`/invoices/${id}${path}`, { method: 'POST', body: body ?? {} });
       await reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed');
@@ -42,7 +40,6 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
       const base64Content = await fileToBase64(file);
       await apiFetch(`/invoices/${id}/file`, {
         method: 'POST',
-        userEmail: user.email,
         body: { fileName: file.name, contentType: file.type || 'application/octet-stream', base64Content },
       });
       await reload();
@@ -58,8 +55,8 @@ export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
     setActionError(null);
     const tab = window.open('', '_blank');
     try {
-      const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/invoices/${id}/file/download`, { userEmail: user.email });
-      const blob = await fetchFileBlob(downloadUrl, user.email);
+      const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/invoices/${id}/file/download`, {});
+      const blob = await fetchFileBlob(downloadUrl);
       if (tab) tab.location.href = URL.createObjectURL(blob);
     } catch (err) {
       tab?.close();

@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { BuildingIcon, CheckCircleIcon, ClipboardIcon } from '../../components/icons';
 import { Card, EmptyState, PageHeader } from '../../components/ui';
-import { useUser } from '../../lib/user-context';
+import { useRequiredUser } from '../../lib/auth-context';
 
 export default function SettingsPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
 
-  if (user.role !== 'ADMIN') {
+  if (!user.roles.includes('ADMIN')) {
     return (
       <div>
         <PageHeader title="Settings" subtitle="Org-level configuration." />

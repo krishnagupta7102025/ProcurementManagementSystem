@@ -6,12 +6,10 @@ import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Table, Td
 import { apiFetch } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { PaymentBatch } from '../../../lib/types';
 
 export default function PaymentBatchDetailPage(props: PageProps<'/payments/[id]'>) {
   const { id } = use(props.params);
-  const { user } = useUser();
   const { data: batch, error, loading, reload } = useApiData<PaymentBatch>(`/payment-batches/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +22,7 @@ export default function PaymentBatchDetailPage(props: PageProps<'/payments/[id]'
     setActionError(null);
     setBusy(true);
     try {
-      await apiFetch(`/payment-batches/${id}${path}`, { method: 'POST', userEmail: user.email, body: body ?? {} });
+      await apiFetch(`/payment-batches/${id}${path}`, { method: 'POST', body: body ?? {} });
       await reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed');

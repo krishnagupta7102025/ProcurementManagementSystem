@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, ApiError } from './api';
-import { useUser } from './user-context';
+import { useAuth } from './auth-context';
 
-/** GET `path` as the current demo user, re-fetching whenever the user switches. */
+/** GET `path` as the logged-in user, re-fetching whenever the session changes. */
 export function useApiData<T>(path: string | null) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    if (!path) {
+    if (!path || !user) {
       setLoading(false);
       return;
     }
@@ -21,7 +21,7 @@ export function useApiData<T>(path: string | null) {
     setError(null);
     setStatus(null);
     try {
-      const result = await apiFetch<T>(path, { userEmail: user.email });
+      const result = await apiFetch<T>(path);
       setData(result);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong talking to the API.');
@@ -29,7 +29,7 @@ export function useApiData<T>(path: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [path, user.email]);
+  }, [path, user]);
 
   useEffect(() => {
     // Fetching on mount/path/user change and writing the result into state is

@@ -5,16 +5,17 @@ import { Button, Card, EmptyState, ErrorBanner, Field, Input, Loading, PageHeade
 import { apiFetch } from '../../../lib/api';
 import { formatDate } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
+import { useRequiredUser } from '../../../lib/auth-context';
 import type { OrgUser, UserRole } from '../../../lib/types';
 
 const ALL_ROLES: UserRole[] = ['REQUESTER', 'APPROVER', 'BUYER', 'RECEIVER', 'AP', 'CONTROLLER', 'ADMIN'];
 
 export default function UsersSettingsPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
   const { data: users, error, loading, reload } = useApiData<OrgUser[]>('/users');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [password, setPassword] = useState('');
   const [roles, setRoles] = useState<Set<UserRole>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -39,11 +40,11 @@ export default function UsersSettingsPage() {
     try {
       await apiFetch('/users', {
         method: 'POST',
-        userEmail: user.email,
-        body: { email, displayName, roles: [...roles] },
+        body: { email, displayName, password, roles: [...roles] },
       });
       setEmail('');
       setDisplayName('');
+      setPassword('');
       setRoles(new Set());
       await reload();
     } catch (err) {
@@ -57,7 +58,7 @@ export default function UsersSettingsPage() {
     <div>
       <PageHeader title="Users" subtitle="Provision users ahead of their first sign-in and assign the roles they need." />
 
-      {user.role === 'ADMIN' && (
+      {user.roles.includes('ADMIN') && (
         <Card className="mb-6">
           <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">New user</h2>
           {formError && <ErrorBanner message={formError} />}
@@ -68,6 +69,16 @@ export default function UsersSettingsPage() {
               </Field>
               <Field label="Full name">
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Jane Doe" required />
+              </Field>
+              <Field label="Initial password" hint="At least 8 characters. Share it with the user directly — there's no email invite flow.">
+                <Input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Temp1234"
+                  minLength={8}
+                  required
+                />
               </Field>
             </div>
             <Field label="Roles">

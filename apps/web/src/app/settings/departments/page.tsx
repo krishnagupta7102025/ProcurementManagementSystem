@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { Button, Card, EmptyState, ErrorBanner, Field, Input, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
 import { apiFetch } from '../../../lib/api';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
+import { useRequiredUser } from '../../../lib/auth-context';
 import type { CostCenter } from '../../../lib/types';
 
 export default function DepartmentsSettingsPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
   const { data: costCenters, error, loading, reload } = useApiData<CostCenter[]>('/cost-centers');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -21,7 +21,7 @@ export default function DepartmentsSettingsPage() {
     setFormError(null);
     setSubmitting(true);
     try {
-      await apiFetch('/cost-centers', { method: 'POST', userEmail: user.email, body: { code, name, department } });
+      await apiFetch('/cost-centers', { method: 'POST', body: { code, name, department } });
       setCode('');
       setName('');
       setDepartment('');
@@ -37,7 +37,7 @@ export default function DepartmentsSettingsPage() {
     <div>
       <PageHeader title="Departments" subtitle="Cost centers that requisitions are raised against." />
 
-      {user.role === 'ADMIN' && (
+      {user.roles.includes('ADMIN') && (
         <Card className="mb-6">
           <h2 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">New department</h2>
           {formError && <ErrorBanner message={formError} />}

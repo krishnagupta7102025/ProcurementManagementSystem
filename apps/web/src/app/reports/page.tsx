@@ -5,7 +5,7 @@ import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Table, Td, 
 import { apiFetchBlob } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
 import { useApiData } from '../../lib/use-api-data';
-import { useUser } from '../../lib/user-context';
+import { useRequiredUser } from '../../lib/auth-context';
 
 interface OpenPoCommitment {
   totalMinorUnits: number;
@@ -42,7 +42,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 export default function ReportsPage() {
-  const { user } = useUser();
+  const user = useRequiredUser();
   const openPo = useApiData<OpenPoCommitment>('/reports/open-po-commitment');
   const aging = useApiData<ApAging>('/reports/ap-aging');
   const cycle = useApiData<CycleTime>('/reports/invoice-to-payment-cycle-time');
@@ -57,13 +57,13 @@ export default function ReportsPage() {
   // GL export is AP/Admin only — stricter than the read-only reports above,
   // which Controller can also see — so the button is hidden rather than
   // left to fail with a 403 on click.
-  const canExportGl = user.role === 'AP' || user.role === 'ADMIN';
+  const canExportGl = user.roles.includes('AP') || user.roles.includes('ADMIN');
 
   async function downloadGlExport() {
     setExportError(null);
     setExporting(true);
     try {
-      const blob = await apiFetchBlob('/reports/gl-export', user.email);
+      const blob = await apiFetchBlob('/reports/gl-export');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

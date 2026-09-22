@@ -6,7 +6,6 @@ import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select } 
 import { apiFetch } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { Invoice, PurchaseOrder, Vendor } from '../../../lib/types';
 
 interface DraftLine {
@@ -19,7 +18,6 @@ interface DraftLine {
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const { user } = useUser();
   const { data: vendors, loading: vendorsLoading } = useApiData<Vendor[]>('/vendors?activeOnly=true');
   const { data: purchaseOrders, loading: posLoading } = useApiData<PurchaseOrder[]>('/purchase-orders');
 
@@ -70,7 +68,6 @@ export default function NewInvoicePage() {
     try {
       const invoice = await apiFetch<Invoice>('/invoices', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           vendorId,
           invoiceNumber,

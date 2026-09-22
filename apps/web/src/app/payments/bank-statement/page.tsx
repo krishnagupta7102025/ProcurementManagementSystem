@@ -6,13 +6,11 @@ import { Button, Card, EmptyState, ErrorBanner, Loading, PageHeader, Select, Tab
 import { apiFetch } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { BankStatementLine, PaymentBatch } from '../../../lib/types';
 
 const SAMPLE_CSV = `date,description,amountMinorUnits,reference\n2026-09-20,NEFT to Acme Supplies,8500000,REF123`;
 
 export default function BankStatementPage() {
-  const { user } = useUser();
   const { data: lines, error, loading, reload } = useApiData<BankStatementLine[]>('/bank-statement-lines');
   const { data: releasedBatches } = useApiData<PaymentBatch[]>('/payment-batches?status=RELEASED');
 
@@ -33,7 +31,7 @@ export default function BankStatementPage() {
     }
     setImporting(true);
     try {
-      await apiFetch('/bank-statement-lines/import', { method: 'POST', userEmail: user.email, body: { csv } });
+      await apiFetch('/bank-statement-lines/import', { method: 'POST', body: { csv } });
       setCsv('');
       await reload();
     } catch (err) {
@@ -52,7 +50,7 @@ export default function BankStatementPage() {
     setActionError(null);
     setBusyId(lineId);
     try {
-      await apiFetch(`/bank-statement-lines/${lineId}/reconcile`, { method: 'POST', userEmail: user.email, body: { paymentBatchId } });
+      await apiFetch(`/bank-statement-lines/${lineId}/reconcile`, { method: 'POST', body: { paymentBatchId } });
       await reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to reconcile');

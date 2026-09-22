@@ -4,10 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button, Card, ErrorBanner, Field, Input, PageHeader } from '../../../components/ui';
 import { apiFetch, ApiError } from '../../../lib/api';
-import { useUser } from '../../../lib/user-context';
 
 export default function NewVendorPage() {
-  const { user } = useUser();
   const router = useRouter();
   const [legalName, setLegalName] = useState('');
   const [gstin, setGstin] = useState('');
@@ -28,7 +26,6 @@ export default function NewVendorPage() {
         : undefined;
       const vendor = await apiFetch<{ id: string }>('/vendors', {
         method: 'POST',
-        userEmail: user.email,
         body: {
           legalName,
           gstin: gstin || undefined,

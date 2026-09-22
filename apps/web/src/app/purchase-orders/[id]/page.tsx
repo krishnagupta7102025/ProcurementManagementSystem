@@ -6,12 +6,10 @@ import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select, T
 import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
-import { useUser } from '../../../lib/user-context';
 import type { GoodsReceipt, PurchaseOrder } from '../../../lib/types';
 
 export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orders/[id]'>) {
   const { id } = use(props.params);
-  const { user } = useUser();
   const { data: po, error, loading, reload } = useApiData<PurchaseOrder>(`/purchase-orders/${id}`);
   const { data: receipts, reload: reloadReceipts } = useApiData<GoodsReceipt[]>(`/purchase-orders/${id}/goods-receipts`);
 
@@ -27,7 +25,7 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
     setActionError(null);
     setBusy(true);
     try {
-      await apiFetch(`/purchase-orders/${id}${path}`, { method: 'POST', userEmail: user.email, body: body ?? {} });
+      await apiFetch(`/purchase-orders/${id}${path}`, { method: 'POST', body: body ?? {} });
       await reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed');
@@ -43,7 +41,6 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
     try {
       await apiFetch(`/purchase-orders/${id}/goods-receipts`, {
         method: 'POST',
-        userEmail: user.email,
         body: {
           lines: [{ poLineId: grnLineId, quantityReceived: Number(grnQuantity), conditionNotes: grnNotes || undefined }],
         },
@@ -74,9 +71,8 @@ export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orde
     try {
       const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/purchase-orders/${id}/pdf`, {
         method: 'POST',
-        userEmail: user.email,
       });
-      const blob = await fetchFileBlob(downloadUrl, user.email);
+      const blob = await fetchFileBlob(downloadUrl);
       if (tab) tab.location.href = URL.createObjectURL(blob);
     } catch (err) {
       tab?.close();
