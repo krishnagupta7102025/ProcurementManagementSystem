@@ -42,7 +42,7 @@ export default function PaymentsPage() {
           <tbody>
             {batches.map((batch) => (
               <TRow key={batch.id}>
-                <TdLink href={`/payments/${batch.id}`}>{batch.lines.length} invoice(s)</TdLink>
+                <TdLink href={`/payments/detail?id=${batch.id}`}>{batch.lines.length} invoice(s)</TdLink>
                 <Td>{formatMoney(batch.totalAmountMinorUnits, batch.currency)}</Td>
                 <Td>
                   <StatusBadge status={batch.status} />

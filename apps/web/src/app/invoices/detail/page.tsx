@@ -1,16 +1,20 @@
 'use client';
 
-import { use, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Input, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
+import { WithIdParam } from '../../../components/WithIdParam';
 import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { fileToBase64 } from '../../../lib/file';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import type { Invoice } from '../../../lib/types';
 
-export default function InvoiceDetailPage(props: PageProps<'/invoices/[id]'>) {
-  const { id } = use(props.params);
+export default function InvoiceDetailPage() {
+  return <WithIdParam>{(id) => <InvoiceDetail id={id} />}</WithIdParam>;
+}
+
+function InvoiceDetail({ id }: { id: string }) {
   const { data: invoice, error, loading, reload } = useApiData<Invoice>(`/invoices/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

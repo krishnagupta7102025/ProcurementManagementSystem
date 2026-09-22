@@ -36,7 +36,7 @@ export default function InvoicesPage() {
           <tbody>
             {invoices.map((inv) => (
               <TRow key={inv.id}>
-                <TdLink href={`/invoices/${inv.id}`}>{inv.vendor?.legalName ?? inv.vendorId}</TdLink>
+                <TdLink href={`/invoices/detail?id=${inv.id}`}>{inv.vendor?.legalName ?? inv.vendorId}</TdLink>
                 <Td>{inv.invoiceNumber}</Td>
                 <Td>{formatMoney(inv.totalMinorUnits, inv.currency)}</Td>
                 <Td>

@@ -35,7 +35,7 @@ export default function PurchaseOrdersPage() {
           <tbody>
             {pos.map((po) => (
               <TRow key={po.id}>
-                <TdLink href={`/purchase-orders/${po.id}`}>{po.vendor?.legalName ?? po.vendorId}</TdLink>
+                <TdLink href={`/purchase-orders/detail?id=${po.id}`}>{po.vendor?.legalName ?? po.vendorId}</TdLink>
                 <Td>{formatMoney(po.negotiatedTotalMinorUnits, po.currency)}</Td>
                 <Td>
                   <StatusBadge status={po.status} />

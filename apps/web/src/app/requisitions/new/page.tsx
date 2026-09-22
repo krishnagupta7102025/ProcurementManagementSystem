@@ -60,7 +60,7 @@ export default function NewRequisitionPage() {
           })),
         },
       });
-      router.push(`/requisitions/${requisition.id}`);
+      router.push(`/requisitions/detail?id=${requisition.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create requisition');
       setSubmitting(false);

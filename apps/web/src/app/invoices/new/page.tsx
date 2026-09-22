@@ -82,7 +82,7 @@ export default function NewInvoicePage() {
           })),
         },
       });
-      router.push(`/invoices/${invoice.id}`);
+      router.push(`/invoices/detail?id=${invoice.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invoice');
       setSubmitting(false);

@@ -37,7 +37,7 @@ export default function VendorsPage() {
           <tbody>
             {vendors.map((vendor) => (
               <TRow key={vendor.id}>
-                <TdLink href={`/vendors/${vendor.id}`}>{vendor.legalName}</TdLink>
+                <TdLink href={`/vendors/detail?id=${vendor.id}`}>{vendor.legalName}</TdLink>
                 <Td>{vendor.gstin ?? '—'}</Td>
                 <Td>Net {vendor.paymentTermsDays}</Td>
                 <Td>{vendor.contacts.map((c) => c.email).filter(Boolean).join(', ') || '—'}</Td>

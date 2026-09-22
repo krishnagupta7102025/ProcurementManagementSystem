@@ -77,7 +77,7 @@ export default function NewPurchaseOrderPage() {
           })),
         },
       });
-      router.push(`/purchase-orders/${po.id}`);
+      router.push(`/purchase-orders/detail?id=${po.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create purchase order');
       setSubmitting(false);

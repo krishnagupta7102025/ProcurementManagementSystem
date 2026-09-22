@@ -53,7 +53,7 @@ export default function RequisitionsPage() {
           <tbody>
             {requisitions.map((r) => (
               <TRow key={r.id}>
-                <TdLink href={`/requisitions/${r.id}`}>{r.department}</TdLink>
+                <TdLink href={`/requisitions/detail?id=${r.id}`}>{r.department}</TdLink>
                 <Td>{r.requester?.displayName ?? '—'}</Td>
                 <Td>{formatMoney(r.estimatedTotalMinorUnits, r.currency)}</Td>
                 <Td>

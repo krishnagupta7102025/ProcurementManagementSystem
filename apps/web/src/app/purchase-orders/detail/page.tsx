@@ -1,15 +1,19 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Select, Table, Td, Textarea, Th, TRow } from '../../../components/ui';
+import { WithIdParam } from '../../../components/WithIdParam';
 import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import type { GoodsReceipt, PurchaseOrder } from '../../../lib/types';
 
-export default function PurchaseOrderDetailPage(props: PageProps<'/purchase-orders/[id]'>) {
-  const { id } = use(props.params);
+export default function PurchaseOrderDetailPage() {
+  return <WithIdParam>{(id) => <PurchaseOrderDetail id={id} />}</WithIdParam>;
+}
+
+function PurchaseOrderDetail({ id }: { id: string }) {
   const { data: po, error, loading, reload } = useApiData<PurchaseOrder>(`/purchase-orders/${id}`);
   const { data: receipts, reload: reloadReceipts } = useApiData<GoodsReceipt[]>(`/purchase-orders/${id}/goods-receipts`);
 

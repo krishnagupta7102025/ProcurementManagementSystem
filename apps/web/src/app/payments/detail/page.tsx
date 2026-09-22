@@ -1,15 +1,19 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Field, Input, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
+import { WithIdParam } from '../../../components/WithIdParam';
 import { apiFetch } from '../../../lib/api';
 import { formatDate, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import type { PaymentBatch } from '../../../lib/types';
 
-export default function PaymentBatchDetailPage(props: PageProps<'/payments/[id]'>) {
-  const { id } = use(props.params);
+export default function PaymentBatchDetailPage() {
+  return <WithIdParam>{(id) => <PaymentBatchDetail id={id} />}</WithIdParam>;
+}
+
+function PaymentBatchDetail({ id }: { id: string }) {
   const { data: batch, error, loading, reload } = useApiData<PaymentBatch>(`/payment-batches/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

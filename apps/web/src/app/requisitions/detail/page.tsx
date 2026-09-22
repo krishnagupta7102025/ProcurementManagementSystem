@@ -1,17 +1,21 @@
 'use client';
 
-import { use, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { Button, Card, ErrorBanner, Loading, PageHeader, Table, Td, Th, TRow } from '../../../components/ui';
+import { WithIdParam } from '../../../components/WithIdParam';
 import { apiFetch, fetchFileBlob } from '../../../lib/api';
 import { fileToBase64 } from '../../../lib/file';
 import { formatDateTime, formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
 import type { Requisition } from '../../../lib/types';
 
-export default function RequisitionDetailPage(props: PageProps<'/requisitions/[id]'>) {
-  const { id } = use(props.params);
+export default function RequisitionDetailPage() {
+  return <WithIdParam>{(id) => <RequisitionDetail id={id} />}</WithIdParam>;
+}
+
+function RequisitionDetail({ id }: { id: string }) {
   const router = useRouter();
   const { data: requisition, error, loading, reload } = useApiData<Requisition>(`/requisitions/${id}`);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -25,7 +29,7 @@ export default function RequisitionDetailPage(props: PageProps<'/requisitions/[i
     try {
       const result = await apiFetch<Requisition>(`/requisitions/${id}/${action}`, { method: 'POST' });
       if (action === 'clone') {
-        router.push(`/requisitions/${result.id}`);
+        router.push(`/requisitions/detail?id=${result.id}`);
       } else {
         await reload();
       }

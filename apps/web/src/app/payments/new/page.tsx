@@ -39,7 +39,7 @@ export default function NewPaymentBatchPage() {
           })),
         },
       });
-      router.push(`/payments/${batch.id}`);
+      router.push(`/payments/detail?id=${batch.id}`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to create payment batch');
       setSubmitting(false);

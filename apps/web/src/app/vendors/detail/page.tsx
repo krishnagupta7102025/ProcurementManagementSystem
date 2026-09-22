@@ -1,8 +1,9 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { Card, ErrorBanner, Loading, PageHeader, Select } from '../../../components/ui';
 import { StatusBadge } from '../../../components/StatusBadge';
+import { WithIdParam } from '../../../components/WithIdParam';
 import { apiFetch, ApiError } from '../../../lib/api';
 import { formatMoney } from '../../../lib/format';
 import { useApiData } from '../../../lib/use-api-data';
@@ -14,8 +15,11 @@ interface SpendSummary {
   avgInvoiceToPaymentDays: number | null;
 }
 
-export default function VendorDetailPage(props: PageProps<'/vendors/[id]'>) {
-  const { id } = use(props.params);
+export default function VendorDetailPage() {
+  return <WithIdParam>{(id) => <VendorDetail id={id} />}</WithIdParam>;
+}
+
+function VendorDetail({ id }: { id: string }) {
   const { data: vendor, error, loading, reload } = useApiData<Vendor>(`/vendors/${id}`);
   const spend = useApiData<SpendSummary>(`/vendors/${id}/spend-summary`);
   const [actionError, setActionError] = useState<string | null>(null);

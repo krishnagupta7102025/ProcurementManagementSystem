@@ -33,7 +33,7 @@ export default function NewVendorPage() {
           contacts,
         },
       });
-      router.push(`/vendors/${vendor.id}`);
+      router.push(`/vendors/detail?id=${vendor.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
       setSubmitting(false);
