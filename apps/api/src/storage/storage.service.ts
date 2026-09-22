@@ -23,7 +23,19 @@ const LOCAL_STORAGE_PUBLIC_URL =
  */
 @Injectable()
 export class StorageService {
-  private readonly client = isLocalStorageEnabled() ? undefined : new S3Client({ region: process.env.S3_REGION });
+  // S3_ENDPOINT is only set for an S3-compatible provider that isn't AWS
+  // itself (e.g. Cloudflare R2) — real AWS resolves its endpoint from the
+  // region alone. R2 in particular requires forcePathStyle (per Cloudflare's
+  // own S3-compatibility docs), which real AWS also accepts fine, so it's
+  // safe to apply whenever a custom endpoint is set.
+  private readonly client = isLocalStorageEnabled()
+    ? undefined
+    : new S3Client({
+        region: process.env.S3_REGION,
+        ...(process.env.S3_ENDPOINT
+          ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
+          : {}),
+      });
   private readonly bucket = process.env.S3_BUCKET as string;
 
   buildKey(orgId: string, path: string): string {

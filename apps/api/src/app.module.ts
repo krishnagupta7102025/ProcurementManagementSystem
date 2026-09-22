@@ -1,6 +1,8 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { ApprovalModule } from './approval/approval.module.js';
@@ -23,6 +25,10 @@ import { VendorModule } from './vendor/vendor.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // A sane global default against casual abuse; /auth/login overrides this
+    // with a much stricter limit (see AuthController) since it's the one
+    // endpoint a brute-force credential-guessing attempt would actually hit.
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }] }),
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     PrismaModule,
     UserModule,
@@ -42,6 +48,6 @@ import { VendorModule } from './vendor/vendor.module.js';
     ReportingModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

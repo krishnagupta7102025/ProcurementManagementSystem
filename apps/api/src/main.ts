@@ -18,15 +18,18 @@ if (!process.env.AUTH_JWT_SECRET) {
 // reject anything but the smallest scanned document, so it's raised here.
 const JSON_BODY_LIMIT = '10mb';
 
+// CORS_ALLOWED_ORIGINS is a comma-separated list (e.g. the GitHub Pages
+// origin in production). Unset in local dev, where any origin is fine —
+// there's no real user data on the line and the web app's port can vary.
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',').map((o) => o.trim());
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
   app.use(json({ limit: JSON_BODY_LIMIT }));
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
   );
-  // The web app runs on a different port in local dev; there's no
-  // production deployment yet to scope this down to a real origin list.
-  app.enableCors({ origin: true, credentials: true });
+  app.enableCors({ origin: allowedOrigins ?? true, credentials: true });
   await app.listen(process.env.PORT ?? 3001);
 }
 await bootstrap();

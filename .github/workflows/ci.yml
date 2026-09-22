@@ -36,6 +36,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://p2p:p2p@localhost:5432/p2p?sslmode=disable
       REDIS_URL: redis://localhost:6379
+      AUTH_JWT_SECRET: ci-only-secret-never-used-outside-this-workflow
 
     steps:
       - uses: actions/checkout@v4
