@@ -5,9 +5,9 @@ This file is auto-loaded by Claude Code at the start of every session in this re
 ## What this is
 
 An internal Losung360 Procure-to-Pay module: Requisition → Approval → Purchase Order →
-Goods Receipt (GRN) → Invoice → 2/3-way Match → Payment → GL export. It follows the same
-platform pattern as Losung360's other products (SupplySphere, StockBridge, ShipMaxx): a
-module that plugs into Losung360 Central Login (SSO, RBAC, subscriptions).
+Goods Receipt (GRN) → Invoice → 2/3-way Match → Payment → GL export. Unlike Losung360's
+other products (SupplySphere, StockBridge, ShipMaxx), this module does not plug into
+Central Login SSO — see the Auth line below for why.
 
 Read [docs/00-prd.md](docs/00-prd.md) first — it is the source of truth for scope and
 behavior. [docs/10-phase-0-tickets.md](docs/10-phase-0-tickets.md) is the current build
@@ -22,7 +22,11 @@ phase. [docs/99-build-guide.md](docs/99-build-guide.md) has local setup / run in
 - **Async/jobs:** BullMQ on Redis (invoice OCR ingestion, approval reminders, payment batch runs)
 - **Storage:** S3-compatible object storage for PO PDFs, invoices, GRN attachments
 - **Infra:** AWS ap-south-1 (Mumbai), multi-AZ; Cloudflare in front of public endpoints
-- **Auth:** Losung360 Central Login SSO (OIDC) — this module never rolls its own auth
+- **Auth:** Local email/password login, not Central Login SSO — a deliberate decision
+  (2026-09-22), not a placeholder. Credentials are stored as bcrypt hashes on `User`;
+  sessions are self-issued JWTs (`src/auth/jwt.util.ts`) signed with `AUTH_JWT_SECRET`.
+  Admin provisions every user and sets their initial password directly (Settings > Users)
+  — there is no self-service signup and no email-invite flow.
 - **Multi-tenant:** every table is scoped by `org_id`; row-level isolation, no cross-tenant queries
 
 ## Conventions

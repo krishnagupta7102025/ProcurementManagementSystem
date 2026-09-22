@@ -1,5 +1,8 @@
+import { hashPassword } from '../auth/password.util.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import type { StorageService } from '../storage/storage.service.js';
+
+const TEST_PASSWORD = 'test-password-not-used-anywhere-real';
 
 let counter = 0;
 function unique(prefix: string): string {
@@ -33,13 +36,15 @@ export async function createTestUser(
   prisma: PrismaService,
   orgId: string,
   roles: string[] = ['REQUESTER'],
+  password: string = TEST_PASSWORD,
 ) {
   const tag = unique('user');
+  const passwordHash = await hashPassword(password);
   return prisma.user.create({
     data: {
       orgId,
-      centralLoginId: tag,
       email: `${tag}@example.test`,
+      passwordHash,
       displayName: tag,
       roles: roles as never,
     },

@@ -2,16 +2,17 @@
 
 **Status:** Draft v1 — Phase 0 implementation complete
 **Document Owner:** Krishna Gupta
-**Last Updated:** 2026-09-20
+**Last Updated:** 2026-09-22
 
 ## 1. Product Vision
 
 Procure-to-Pay (P2P) is a Losung360 platform module that gives finance and operations
 teams a single, auditable system for the full purchasing lifecycle: raising a
 requisition, getting it approved, issuing a purchase order, receiving goods, matching
-the vendor invoice against the PO and receipt, and releasing payment. It plugs into
-Losung360 Central Login for SSO, roles, and subscription management, following the
-same architectural pattern as ShipMaxx, SupplySphere, and StockBridge.
+the vendor invoice against the PO and receipt, and releasing payment. Unlike ShipMaxx,
+SupplySphere, and StockBridge, this module owns its own authentication (local
+email/password, Admin-provisioned) rather than plugging into Losung360 Central Login —
+see §7 Security and the Decisions Log for why.
 
 Today, procurement inside Losung360 (and for the merchants it may later be offered to)
 is spread across email threads, spreadsheets, and manual accounting entries. There is
@@ -190,10 +191,11 @@ Payment → Paid → Cancelled/Void`.
   50,000 open records; matching engine must process a submitted invoice against its
   PO/GRN in <2s synchronously (heavier reconciliation batch jobs run async via
   BullMQ).
-- **Security:** SSO via Losung360 Central Login (OIDC) only — no local password auth
-  in this module. Role checks enforced server-side on every mutating endpoint, never
-  client-side only. Documents (invoices, POs) stored in S3 with per-org-scoped
-  access, signed URLs with short TTL.
+- **Security:** local email/password login (bcrypt-hashed, Admin-provisioned) rather
+  than Losung360 Central Login SSO — see the Decisions Log. Sessions are self-issued
+  JWTs. Role checks enforced server-side on every mutating endpoint, never client-side
+  only. Documents (invoices, POs) stored in S3 with per-org-scoped access, signed URLs
+  with short TTL.
 - **Availability:** target 99.5% for the core approval/PO/invoice flows (finance
   teams work in business hours; this is not a 24/7-critical path like fulfillment).
 
@@ -201,7 +203,6 @@ Payment → Paid → Cancelled/Void`.
 
 | Integration                                      | Phase    | Notes                                                        |
 | ------------------------------------------------ | -------- | ------------------------------------------------------------ |
-| Losung360 Central Login (SSO/RBAC)               | Phase 0  | Required from day one — no standalone auth                   |
 | Notification center (Losung360 platform)         | Phase 0  | Approval requests, escalations, match exceptions             |
 | Object storage (S3)                              | Phase 0  | PO PDFs, invoice uploads, GRN attachments                    |
 | Bank statement CSV import                        | Phase 0  | Manual reconciliation aid only                               |
@@ -213,7 +214,7 @@ Payment → Paid → Cancelled/Void`.
 
 ## 8. Data Model (high level)
 
-Core entities: `Org`, `User` (from Central Login), `CostCenter`, `Vendor`,
+Core entities: `Org`, `User` (local email/password credentials), `CostCenter`, `Vendor`,
 `Requisition`, `RequisitionLine`, `ApprovalRule`, `ApprovalStep`, `PurchaseOrder`,
 `POLine`, `GoodsReceipt`, `GRNLine`, `Invoice`, `InvoiceLine`, `MatchException`,
 `PaymentBatch`, `Payment`, `AuditLogEntry`.
@@ -243,10 +244,11 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
 
 - **Phase 0 (complete):** Full P2P loop end-to-end — requisition, approval, PO,
   GRN, invoice entry (manual), 2-way/3-way match, payment tracking (status only, no
-  bank API), CSV GL export, vendor master, audit trail, basic multi-currency, and a
-  demo seed script. See [10-phase-0-tickets.md](10-phase-0-tickets.md) — every
-  ticket implemented and tested except the frontend UI tickets (P2P-024), which are
-  blocked on a real Central Login integration (open question below).
+  bank API), CSV GL export, vendor master, audit trail, basic multi-currency, a
+  demo seed script, and a full Next.js frontend covering every module (P2P-024 and
+  beyond), authenticated via local email/password login rather than the
+  originally-planned Central Login SSO — see §7 Security and the Decisions Log.
+  See [10-phase-0-tickets.md](10-phase-0-tickets.md) for the full ticket list.
 - **Phase 1:** Invoice OCR/auto-extraction, vendor self-service portal, parallel/quorum
   approvals, native accounting-system API sync, spend analytics dashboards.
 - **Phase 2+:** Payment initiation via bank/payment-gateway API, sourcing/RFQ,
@@ -270,3 +272,14 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
 6. Org/tenant model — is this **single-tenant per Losung360 client** or does it need
    to support one client managing multiple legal entities (multi-entity within one
    org) from day one?
+
+## 12. Decisions Log
+
+- **2026-09-22 — Local email/password auth instead of Central Login SSO.** This
+  module originally followed the platform-wide pattern of plugging into Losung360
+  Central Login for authentication (§1, §7 as originally written). That plan is
+  dropped: this module now owns its own credentials. `User.passwordHash` (bcrypt) is
+  the source of truth; login issues a self-signed JWT (`src/auth/jwt.util.ts`,
+  `AUTH_JWT_SECRET`). Admin provisions every user and sets their initial password
+  directly (Settings > Users) — there is no self-service signup and no email-invite
+  flow. _(Owner: Krishna Gupta)_

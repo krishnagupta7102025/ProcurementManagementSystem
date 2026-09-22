@@ -47,15 +47,15 @@ enum Role {
   ADMIN
 }
 
-/// Mirrors identity from Losung360 Central Login (P2P-003) — this table is a
-/// local cache of SSO users, not a source of truth for credentials.
+/// Local email/password identity (P2P-003) — this table is the source of
+/// truth for credentials; there is no external SSO provider.
 model User {
-  id             String   @id @default(cuid())
-  orgId          String
-  centralLoginId String   @unique
-  email          String
-  displayName    String
-  roles          Role[]
+  id           String   @id @default(cuid())
+  orgId        String
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  roles        Role[]
   // Escalation target (P2P-023) once Central Login syncs a real org chart —
   // nullable, so an unmapped user simply never escalates rather than erroring.
   managerId      String?
@@ -78,7 +78,6 @@ model User {
   paymentBatchesReleased    PaymentBatch[]        @relation("PaymentBatchReleasedBy")
   bankStatementLinesMatched BankStatementLine[]
 
-  @@unique([orgId, email])
   @@index([orgId])
   @@map("users")
 }

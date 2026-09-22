@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -9,7 +9,7 @@ import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto.js';
 import { SendToVendorDto } from './dto/send-to-vendor.dto.js';
 import { PurchaseOrderService } from './purchase-order.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('purchase-orders')
 export class PurchaseOrderController {
   constructor(private readonly purchaseOrders: PurchaseOrderService) {}

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -9,7 +9,7 @@ import { CreatePaymentBatchDto } from './dto/create-payment-batch.dto.js';
 import { ReleasePaymentBatchDto } from './dto/release-payment-batch.dto.js';
 import { PaymentBatchService } from './payment-batch.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('payment-batches')
 export class PaymentBatchController {
   constructor(private readonly batches: PaymentBatchService) {}

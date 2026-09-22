@@ -24,29 +24,34 @@ describe('UserService', () => {
     await prisma.$disconnect();
   });
 
-  it('creates a user scoped to the org with the given roles', async () => {
+  it('creates a user scoped to the org with the given roles, and never returns the password hash', async () => {
     const user = await service.create(org.id, admin.id, {
       email: 'new.buyer@example.test',
       displayName: 'New Buyer',
+      password: 'Passw0rd!',
       roles: [Role.BUYER],
     });
     expect(user.email).toBe('new.buyer@example.test');
     expect(user.roles).toEqual([Role.BUYER]);
+    expect(user).not.toHaveProperty('passwordHash');
 
     const all = await service.findAll(org.id);
     expect(all.map((u) => u.id)).toContain(user.id);
+    expect(all.every((u) => !('passwordHash' in u))).toBe(true);
   });
 
   it('rejects creating a second user with the same email', async () => {
     await service.create(org.id, admin.id, {
       email: 'dup@example.test',
       displayName: 'First',
+      password: 'Passw0rd!',
       roles: [Role.REQUESTER],
     });
     await expect(
       service.create(org.id, admin.id, {
         email: 'dup@example.test',
         displayName: 'Second',
+        password: 'Passw0rd!',
         roles: [Role.REQUESTER],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);

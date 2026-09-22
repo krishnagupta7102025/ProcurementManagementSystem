@@ -1,7 +1,7 @@
 import { Controller, Get, NotFoundException, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { isLocalStorageEnabled } from './dev-local-storage.js';
 import { StorageService } from './storage.service.js';
@@ -19,7 +19,7 @@ function contentTypeFor(key: string): string {
  * only exists because STORAGE_DRIVER=local (see dev-local-storage.ts)
  * points getDownloadUrl() here instead.
  */
-@UseGuards(OidcAuthGuard)
+@UseGuards(AuthGuard)
 @Controller('storage')
 export class StorageController {
   constructor(private readonly storage: StorageService) {}

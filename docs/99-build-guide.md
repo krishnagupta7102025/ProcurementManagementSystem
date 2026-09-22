@@ -22,10 +22,11 @@ deploy` (which doesn't touch the shadow db at all).
     extract, `make`, then run `src/redis-server --daemonize yes`. No sudo/Homebrew
     needed if Xcode Command Line Tools (`cc`, `make`) are already installed.
 - AWS CLI configured with access to the dev S3 bucket (or point `S3_*` env vars at a
-  local MinIO container for fully offline dev)
-- Access to Losung360 Central Login dev/staging OIDC credentials (ask platform team) —
-  until that's available, `CENTRAL_LOGIN_OIDC_ISSUER` can be left blank; every guarded
-  route will correctly 401 rather than silently allow access.
+  local MinIO container for fully offline dev) — or set `STORAGE_DRIVER=local` to skip
+  S3 entirely for local dev (see `src/storage/dev-local-storage.ts`)
+- No external auth provider needed — this module uses its own local email/password
+  login (see the Decisions Log in [00-prd.md](00-prd.md) §12). Just set
+  `AUTH_JWT_SECRET` to any long random string.
 
 ## First-time setup
 
@@ -33,10 +34,10 @@ deploy` (which doesn't touch the shadow db at all).
 git clone <this-repo>
 cd p2p
 pnpm install
-cp .env.example apps/api/.env    # fill in DB, Redis, S3, Central Login OIDC values
+cp .env.example apps/api/.env    # fill in DB, Redis, S3, AUTH_JWT_SECRET
 docker compose up -d             # starts local Postgres + Redis
 pnpm --filter api run db:migrate
-pnpm --filter api run db:seed    # runs P2P-081 seed script once it exists
+pnpm --filter api run db:seed    # creates demo users; prints each one's email + shared password
 ```
 
 ## Running locally
@@ -64,8 +65,8 @@ pnpm run build       # nest build + next build
 | ------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `DATABASE_URL`                                                                        | Postgres connection string                          |
 | `REDIS_URL`                                                                           | Redis connection string (cache + BullMQ)            |
-| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage                                    |
-| `CENTRAL_LOGIN_OIDC_ISSUER`, `CENTRAL_LOGIN_CLIENT_ID`, `CENTRAL_LOGIN_CLIENT_SECRET` | SSO                                                 |
+| `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage (or set `STORAGE_DRIVER=local` to skip) |
+| `AUTH_JWT_SECRET`                                                                     | Signs/verifies local login sessions — required, API refuses to boot without it |
 | `NOTIFICATION_CENTER_API_URL`                                                         | Losung360 platform notification integration         |
 | `APPROVAL_SLA_REMINDER_HOURS`, `APPROVAL_SLA_ESCALATE_HOURS`                          | P2P-023 SLA thresholds (default 48h / 96h)          |
 | `APPROVAL_SLA_CHECK_INTERVAL_MS`                                                      | How often the escalation job scans (default 15 min) |
@@ -102,9 +103,9 @@ the P2P-082 end-to-end happy-path test passing in CI, and every open question in
 [00-prd.md](00-prd.md) §11 either answered (PRD updated) or explicitly deferred with a
 noted owner.
 
-**Status: met**, except P2P-024 (the requisition/approvals frontend UI), which is
-blocked on a real Central Login integration rather than a Phase 0 gap — see
-[00-prd.md](00-prd.md) §11. Everything else — Epics A through I — is implemented,
-tested (105 vitest tests against a live Postgres, including the P2P-082 happy-path
-suite at `apps/api/src/e2e/happy-path.spec.ts`), and a demo seed script
-(`pnpm --filter api run db:seed`) walks the full chain for local dev/demos.
+**Status: met.** Epics A through I are implemented and tested, including a full
+Next.js frontend covering every module (P2P-024 and beyond), authenticated via local
+email/password login (see [00-prd.md](00-prd.md) §12 Decisions Log) rather than the
+originally-planned Central Login SSO. A demo seed script (`pnpm --filter api run
+db:seed`) walks the full requisition→payment chain and prints login credentials for
+every demo user.

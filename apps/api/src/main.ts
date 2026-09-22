@@ -3,11 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { json } from 'express';
 import { AppModule } from './app.module.js';
-import { assertDevAuthBypassNotInProduction } from './auth/dev-auth-bypass.js';
 import { assertLocalStorageNotInProduction } from './storage/dev-local-storage.js';
 
-assertDevAuthBypassNotInProduction();
 assertLocalStorageNotInProduction();
+
+if (!process.env.AUTH_JWT_SECRET) {
+  throw new Error(
+    'AUTH_JWT_SECRET is not set — required to sign/verify login sessions. Set it in .env before starting the API.',
+  );
+}
 
 // Attachments (requisition/invoice files) travel as base64 in a JSON body
 // rather than multipart — Express's default json limit (100kb) would

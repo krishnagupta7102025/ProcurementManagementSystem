@@ -5,12 +5,13 @@
 // happens exactly the way it would for a real user. Safe to re-run: any
 // prior "Losung360 Demo Co" org is torn down first (reusing the same
 // cleanupOrg the test suite uses), so re-running always leaves exactly one
-// fresh copy rather than piling up duplicates — centralLoginId is globally
-// unique, so accumulating duplicate demo orgs isn't an option anyway.
+// fresh copy rather than piling up duplicates — email is globally unique,
+// so accumulating duplicate demo orgs isn't an option anyway.
 import 'dotenv/config';
 import { AuditService } from '../src/audit/audit.service.js';
 import { ApprovalRuleService } from '../src/approval/approval-rule.service.js';
 import { ApprovalService } from '../src/approval/approval.service.js';
+import { hashPassword } from '../src/auth/password.util.js';
 import { GoodsReceiptService } from '../src/goods-receipt/goods-receipt.service.js';
 import { InvoiceService } from '../src/invoice/invoice.service.js';
 import { MatchingService } from '../src/invoice/matching.service.js';
@@ -22,6 +23,10 @@ import { cleanupOrg, fakeStorage } from '../src/test-utils/seed-helpers.js';
 import { VendorService } from '../src/vendor/vendor.service.js';
 
 const DEMO_ORG_NAME = 'Losung360 Demo Co';
+
+// Every seeded demo user shares this password — printed at the end of the
+// run, and the only credential a fresh clone of this repo starts with.
+const DEMO_PASSWORD = 'Passw0rd!';
 
 // Minimal stand-in for the one integration Phase 0 doesn't have a real
 // provider for yet (outbound email) — same pattern the test suite uses,
@@ -55,12 +60,13 @@ async function main() {
   console.log('Creating demo org...');
   const org = await prisma.org.create({ data: { name: DEMO_ORG_NAME, baseCurrency: 'INR' } });
 
+  const demoPasswordHash = await hashPassword(DEMO_PASSWORD);
   const [requester, approver, buyer, receiver, ap, controller, admin] = await Promise.all([
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-requester',
         email: 'requester@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Rita Requester',
         roles: ['REQUESTER'],
       },
@@ -68,8 +74,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-approver',
         email: 'approver@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Alan Approver',
         roles: ['APPROVER'],
       },
@@ -77,8 +83,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-buyer',
         email: 'buyer@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Bella Buyer',
         roles: ['BUYER'],
       },
@@ -86,8 +92,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-receiver',
         email: 'receiver@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Ravi Receiver',
         roles: ['RECEIVER'],
       },
@@ -95,8 +101,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-ap',
         email: 'ap@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Amy AP',
         roles: ['AP'],
       },
@@ -104,8 +110,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-controller',
         email: 'controller@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Carl Controller',
         roles: ['CONTROLLER'],
       },
@@ -113,8 +119,8 @@ async function main() {
     prisma.user.create({
       data: {
         orgId: org.id,
-        centralLoginId: 'demo-admin',
         email: 'admin@demo.p2p',
+        passwordHash: demoPasswordHash,
         displayName: 'Ada Admin',
         roles: ['ADMIN'],
       },
@@ -207,6 +213,7 @@ async function main() {
   console.log(
     `Demo users (all roles share this org): requester/approver/buyer/receiver/ap/controller/admin@demo.p2p`,
   );
+  console.log(`Password for every demo user: ${DEMO_PASSWORD}`);
   console.log(
     `Controller user id (for approving over-threshold payment batches): ${controller.id}`,
   );

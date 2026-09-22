@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
 import { Role } from '../generated/prisma/enums.js';
 import { CreateVendorDto } from './dto/create-vendor.dto.js';
@@ -10,7 +10,7 @@ import { UpdateVendorDto } from './dto/update-vendor.dto.js';
 import { UpdateVendorStatusDto } from './dto/update-vendor-status.dto.js';
 import { VendorService } from './vendor.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('vendors')
 export class VendorController {
   constructor(private readonly vendors: VendorService) {}

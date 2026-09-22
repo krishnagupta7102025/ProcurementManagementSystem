@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { ApprovalService } from './approval.service.js';
 import { ApprovalActionDto } from './dto/approval-action.dto.js';
 
-@UseGuards(OidcAuthGuard)
+@UseGuards(AuthGuard)
 @Controller('approvals')
 export class ApprovalController {
   constructor(private readonly approvals: ApprovalService) {}

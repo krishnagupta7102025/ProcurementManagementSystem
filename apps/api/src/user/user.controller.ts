@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -8,7 +8,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UserService } from './user.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly users: UserService) {}

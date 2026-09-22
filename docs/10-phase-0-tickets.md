@@ -16,11 +16,12 @@ S = <1 day, M = 1–3 days, L = 3–5 days.
   from the start.
   - AC: every query in a shared Prisma client helper enforces `org_id` filter; a test
     proves cross-org query returns nothing.
-- **P2P-003** (M) Integrate Losung360 Central Login SSO (OIDC) — session middleware,
-  role claims mapped to local `Role` enum (Requester/Approver/Buyer/Receiver/AP/
-  Controller/Admin).
+- **P2P-003** (M) ~~Integrate Losung360 Central Login SSO (OIDC)~~ **Superseded
+  2026-09-22** (see [00-prd.md](00-prd.md) §12 Decisions Log): implemented as local
+  email/password login instead — session tokens are self-issued JWTs, role claims
+  come from `User.roles`, set by Admin at user-creation time.
   - AC: unauthenticated request to any API route returns 401; role-gated route
-    returns 403 for wrong role.
+    returns 403 for wrong role. (Met, against the new auth mechanism.)
 - **P2P-004** (S) Audit log infra: polymorphic `AuditLogEntry` table + a
   `recordAudit()` helper wired into every mutating service method.
   - AC: creating/updating a requisition writes an audit row with actor, before/after.

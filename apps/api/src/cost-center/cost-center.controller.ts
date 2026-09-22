@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -8,7 +8,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { CostCenterService } from './cost-center.service.js';
 import { CreateCostCenterDto } from './dto/create-cost-center.dto.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('cost-centers')
 export class CostCenterController {
   constructor(private readonly costCenters: CostCenterService) {}

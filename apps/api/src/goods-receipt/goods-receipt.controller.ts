@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -9,7 +9,7 @@ import { ConfirmServiceDto } from './dto/confirm-service.dto.js';
 import { CreateGoodsReceiptDto } from './dto/create-goods-receipt.dto.js';
 import { GoodsReceiptService } from './goods-receipt.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('purchase-orders/:poId/goods-receipts')
 export class GoodsReceiptController {
   constructor(private readonly goodsReceipts: GoodsReceiptService) {}

@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CreateRequisitionDto } from './dto/create-requisition.dto.js';
 import { UpdateRequisitionDto } from './dto/update-requisition.dto.js';
 import { UploadAttachmentDto } from './dto/upload-attachment.dto.js';
 import { RequisitionService } from './requisition.service.js';
 
-@UseGuards(OidcAuthGuard)
+@UseGuards(AuthGuard)
 @Controller('requisitions')
 export class RequisitionController {
   constructor(private readonly requisitions: RequisitionService) {}

@@ -17,7 +17,6 @@ import { PurchaseOrderModule } from './purchase-order/purchase-order.module.js';
 import { ReportingModule } from './reporting/reporting.module.js';
 import { RequisitionModule } from './requisition/requisition.module.js';
 import { StorageModule } from './storage/storage.module.js';
-import { UserAdminModule } from './user/user-admin.module.js';
 import { UserModule } from './user/user.module.js';
 import { VendorModule } from './vendor/vendor.module.js';
 
@@ -27,7 +26,6 @@ import { VendorModule } from './vendor/vendor.module.js';
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     PrismaModule,
     UserModule,
-    UserAdminModule,
     AuthModule,
     AuditModule,
     StorageModule,

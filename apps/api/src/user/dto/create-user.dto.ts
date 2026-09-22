@@ -13,6 +13,10 @@ export class CreateUserDto {
   @MinLength(1)
   displayName!: string;
 
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters' })
+  password!: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @IsEnum(Role, { each: true })

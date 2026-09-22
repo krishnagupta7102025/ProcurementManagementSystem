@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -10,7 +10,7 @@ import { ManualOverrideDto } from './dto/manual-override.dto.js';
 import { RequestCreditNoteDto } from './dto/request-credit-note.dto.js';
 import { MatchExceptionService } from './match-exception.service.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Roles(Role.AP, Role.ADMIN)
 @Controller('match-exceptions')
 export class MatchExceptionController {

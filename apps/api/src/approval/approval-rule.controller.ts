@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.types.js';
-import { OidcAuthGuard } from '../auth/oidc-auth.guard.js';
+import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -9,7 +9,7 @@ import { ApprovalRuleService } from './approval-rule.service.js';
 import { CreateApprovalRuleDto } from './dto/create-approval-rule.dto.js';
 import { UpdateApprovalRuleDto } from './dto/update-approval-rule.dto.js';
 
-@UseGuards(OidcAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 @Controller('approval-rules')
 export class ApprovalRuleController {

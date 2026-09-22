@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { RolesGuard } from '../common/guards/roles.guard.js';
-import { UserModule } from '../user/user.module.js';
-import { OidcAuthGuard } from './oidc-auth.guard.js';
-import { OidcJwksService } from './oidc-jwks.service.js';
+import { AuthController } from './auth.controller.js';
+import { AuthGuard } from './auth.guard.js';
+import { AuthService } from './auth.service.js';
 
 @Module({
-  imports: [UserModule],
-  providers: [OidcJwksService, OidcAuthGuard, RolesGuard],
-  exports: [OidcJwksService, OidcAuthGuard, RolesGuard],
+  controllers: [AuthController],
+  providers: [AuthService, AuthGuard, RolesGuard],
+  exports: [AuthGuard, RolesGuard],
 })
 export class AuthModule {}

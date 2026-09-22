@@ -3,10 +3,10 @@
  * against the local filesystem, served back by StorageController — added
  * so PO PDFs (and future invoice/requisition attachments) can actually be
  * generated and downloaded in this dev environment, which has no real S3
- * bucket or AWS credentials configured (see apps/api/.env). Mirrors the
- * DEV_AUTH_BYPASS pattern: checked independently here (evaluated per call)
- * and in main.ts (evaluated once at boot). Local files aren't durable or
- * shared across instances, so this must never run in production.
+ * bucket or AWS credentials configured (see apps/api/.env). Checked
+ * independently here (evaluated per call) and in main.ts (evaluated once
+ * at boot) — local files aren't durable or shared across instances, so
+ * this must never run in production.
  */
 export function isLocalStorageEnabled(): boolean {
   return process.env.STORAGE_DRIVER === 'local' && process.env.NODE_ENV !== 'production';
