@@ -33,6 +33,15 @@ function clearStoredSession() {
   window.localStorage.removeItem(USER_STORAGE_KEY);
 }
 
+// next.config.ts sets trailingSlash: true (required for the GitHub Pages
+// static export), so usePathname() returns "/login/" once routed there,
+// not "/login" — a bare equality check against '/login' never matches,
+// which caused an actual redirect loop (this component kept calling
+// router.replace('/login') even while already on it).
+export function isLoginPath(pathname: string): boolean {
+  return pathname.replace(/\/$/, '') === '/login';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
@@ -65,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   useEffect(() => {
-    if (ready && !user && pathname !== '/login') {
+    if (ready && !user && !isLoginPath(pathname)) {
       router.replace('/login');
     }
   }, [ready, user, pathname, router]);

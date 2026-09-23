@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { ComponentType, SVGProps } from 'react';
-import { useAuth } from '../lib/auth-context';
+import { isLoginPath, useAuth } from '../lib/auth-context';
 import {
   BanknoteIcon,
   BuildingIcon,
@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // without one would mount protected pages with user: null before the
   // AuthProvider's redirect effect has a chance to run, so this shows
   // nothing instead until either a session is ready or the redirect fires.
-  if (pathname === '/login') {
+  if (isLoginPath(pathname)) {
     return <>{children}</>;
   }
   if (!ready || !user) {
