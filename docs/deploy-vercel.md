@@ -1,15 +1,22 @@
 # Deploying: Vercel (frontend + API) + Neon (Postgres) + R2 (storage)
 
-Both the frontend and API run on Vercel now. Vercel is serverless — there's
-no long-lived process, so the one thing that had to change from local dev
-is the approval-SLA background job: it used to be a BullMQ worker polling
-Redis every 15 minutes, and is now a **Vercel Cron Job** that hits a
-protected endpoint once a day (`apps/api/vercel.json`). One real
-consequence: reminders/escalations are now checked once daily instead of
-every 15 minutes — coarser, but the underlying 48h/96h thresholds are
-generous enough that this is a reasonable trade for not needing Redis at
-all anymore. On a paid Vercel plan you can tighten the schedule (Hobby caps
-cron at once/day; Pro allows hourly or more).
+Both the frontend and API run on Vercel now. The API deploys via Vercel's
+built-in **zero-config NestJS support** — Vercel auto-detects `src/main.ts`
+(it specifically looks for a direct `NestFactory.create(AppModule)` call in
+that file, so don't refactor the bootstrap into a helper module — that's
+what broke it the first time) and wraps the whole app as one Vercel
+Function. No custom `api/` folder or rewrite rules needed.
+
+Vercel is serverless — there's no long-lived process, so the one thing
+that had to change from local dev is the approval-SLA background job: it
+used to be a BullMQ worker polling Redis every 15 minutes, and is now a
+**Vercel Cron Job** that hits a protected endpoint once a day
+(`apps/api/vercel.json`). One real consequence: reminders/escalations are
+now checked once daily instead of every 15 minutes — coarser, but the
+underlying 48h/96h thresholds are generous enough that this is a
+reasonable trade for not needing Redis at all anymore. On a paid Vercel
+plan you can tighten the schedule (Hobby caps cron at once/day; Pro allows
+hourly or more).
 
 | Piece                    | Host                                               |
 | ------------------------ | --------------------------------------------------- |
@@ -51,7 +58,7 @@ You now have: `S3_BUCKET`, `S3_REGION=auto`, `S3_ENDPOINT`, `AWS_ACCESS_KEY_ID`,
 
 1. Vercel dashboard → **Add New… → Project** → import the same GitHub repo again (yes, a second project from the same repo — this is normal for monorepos).
 2. **Root Directory** → `apps/api`.
-3. Vercel should detect there's no framework and treat it as a plain Node project — that's correct, don't force a framework preset.
+3. Vercel should auto-detect this as a NestJS project (via `src/main.ts`) — no framework preset to set manually.
 4. **Environment Variables** — add all of these:
    - `DATABASE_URL` → from step 1
    - `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` → from step 2

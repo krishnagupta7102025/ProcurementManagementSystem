@@ -1,8 +1,7 @@
 {
   "buildCommand": "npx prisma generate",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
   "functions": {
-    "api/index.ts": { "maxDuration": 30 }
+    "src/main.ts": { "runtime": "@vercel/node", "maxDuration": 30 }
   },
   "crons": [{ "path": "/internal/cron/escalation-scan", "schedule": "0 9 * * *" }]
 }
