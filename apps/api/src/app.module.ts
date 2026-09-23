@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -29,7 +28,6 @@ import { VendorModule } from './vendor/vendor.module.js';
     // with a much stricter limit (see AuthController) since it's the one
     // endpoint a brute-force credential-guessing attempt would actually hit.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }] }),
-    BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     PrismaModule,
     UserModule,
     AuthModule,

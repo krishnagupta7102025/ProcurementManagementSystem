@@ -23,19 +23,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
       DATABASE_URL: postgresql://p2p:p2p@localhost:5432/p2p?sslmode=disable
-      REDIS_URL: redis://localhost:6379
       AUTH_JWT_SECRET: ci-only-secret-never-used-outside-this-workflow
 
     steps:
@@ -65,7 +54,7 @@ jobs:
       - name: Test
         run: pnpm run test
 
-      - name: E2E smoke test (boots the full AppModule, including BullMQ/Redis wiring)
+      - name: E2E smoke test (boots the full AppModule)
         run: pnpm --filter api run test:e2e
 
       - name: Build
