@@ -66,7 +66,7 @@ You now have: `S3_BUCKET`, `S3_REGION=auto`, `S3_ENDPOINT`, `AWS_ACCESS_KEY_ID`,
    - `CRON_SECRET` → any long random string — Vercel automatically sends this as a Bearer token to your cron endpoint once it's set
    - `CORS_ALLOWED_ORIGINS` → your frontend's Vercel URL, e.g. `https://procurement-management-system-web.vercel.app`
    - Leave `NOTIFICATION_CENTER_API_URL` blank (unused stub, see CLAUDE.md)
-5. Deploy. `apps/api/vercel.json`'s `buildCommand` (`npx prisma generate`) runs automatically — no other build config needed.
+5. Deploy. `apps/api/vercel.json` sets `buildCommand` to `null` — this isn't "no build command", it's a deliberate signal telling Vercel this is a Functions-only project with no separate build step, which stops it from auto-running `package.json`'s `build` script (`nest build`) and then failing with "No Output Directory named 'public' found" (Vercel's "Other" framework preset expects a static site output otherwise). Prisma's client is generated instead via the `postinstall` script in `apps/api/package.json`, which always runs during install regardless of `buildCommand`.
 6. Note the resulting URL, e.g. `https://p2p-api-xxxx.vercel.app`.
 7. **Run migrations once** — Vercel doesn't run `prisma migrate deploy` automatically the way the old Docker setup did. From your own machine, temporarily set `DATABASE_URL` to the same Neon/Vercel Postgres connection string and run:
    ```bash
