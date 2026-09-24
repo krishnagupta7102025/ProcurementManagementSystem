@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npx prisma generate",
+  "buildCommand": null,
   "crons": [{ "path": "/internal/cron/escalation-scan", "schedule": "0 9 * * *" }]
 }
