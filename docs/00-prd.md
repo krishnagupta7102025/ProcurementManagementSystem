@@ -189,8 +189,7 @@ Payment → Paid → Cancelled/Void`.
   transaction time (rate source is an open question, §11).
 - **Performance:** requisition/PO list views must return in <1s for orgs with up to
   50,000 open records; matching engine must process a submitted invoice against its
-  PO/GRN in <2s synchronously (heavier reconciliation batch jobs run async via
-  BullMQ).
+  PO/GRN in <2s synchronously.
 - **Security:** local email/password login (bcrypt-hashed, Admin-provisioned) rather
   than Losung360 Central Login SSO — see the Decisions Log. Sessions are self-issued
   JWTs. Role checks enforced server-side on every mutating endpoint, never client-side
@@ -283,3 +282,12 @@ see [10-phase-0-tickets.md](10-phase-0-tickets.md) for the schema design ticket.
   `AUTH_JWT_SECRET`). Admin provisions every user and sets their initial password
   directly (Settings > Users) — there is no self-service signup and no email-invite
   flow. _(Owner: Krishna Gupta)_
+
+- **2026-09-25 — MySQL instead of PostgreSQL; hosting moved to AWS.** §6/§8 as
+  originally written assumed PostgreSQL. The database is now MySQL, accessed
+  via Prisma's `@prisma/adapter-mariadb` driver adapter — a deliberate choice,
+  not a placeholder. The one schema-shape consequence: `User.roles` (a native
+  `Role[]` array column on Postgres) is stored as a `Json` array instead,
+  since MySQL has no scalar-list column type. Hosting also moved to AWS
+  (Elastic Beanstalk + RDS MySQL + S3), after brief detours through GitHub
+  Pages/Render and Vercel — see `docs/deploy-aws.md`. _(Owner: Krishna Gupta)_

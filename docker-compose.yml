@@ -1,14 +1,15 @@
 services:
-  postgres:
-    image: postgres:16
+  mysql:
+    image: mysql:8
     environment:
-      POSTGRES_USER: p2p
-      POSTGRES_PASSWORD: p2p
-      POSTGRES_DB: p2p
+      MYSQL_ROOT_PASSWORD: p2p
+      MYSQL_USER: p2p
+      MYSQL_PASSWORD: p2p
+      MYSQL_DATABASE: p2p
     ports:
-      - '5432:5432'
+      - '3306:3306'
     volumes:
-      - p2p_postgres_data:/var/lib/postgresql/data
+      - p2p_mysql_data:/var/lib/mysql
 
 volumes:
-  p2p_postgres_data:
+  p2p_mysql_data:

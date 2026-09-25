@@ -1,7 +1,9 @@
 # Multi-stage build for the NestJS API. Built from the monorepo root
 # (see the `docker build -f apps/api/Dockerfile .` note in
-# docs/deploy-github-pages-render.md) since pnpm workspaces need the root
-# lockfile/workspace file even though only apps/api ends up in the image.
+# docs/deploy-aws.md) since pnpm workspaces need the root lockfile/workspace
+# file even though only apps/api ends up in the image. This image is what
+# both AWS Elastic Beanstalk (current) and the earlier, now-unused Render
+# setup (render.yaml) run.
 FROM node:24-slim AS base
 RUN corepack enable
 WORKDIR /repo
@@ -23,8 +25,8 @@ RUN pnpm --filter api deploy --prod /prod/api
 
 FROM base AS runtime
 # Prisma's query/schema engines need libssl even when driver adapters
-# (@prisma/adapter-pg here) handle actual queries — `migrate deploy` still
-# shells out to a Prisma engine binary that needs it.
+# (@prisma/adapter-mariadb here) handle actual queries — `migrate deploy`
+# still shells out to a Prisma engine binary that needs it.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /prod/api ./

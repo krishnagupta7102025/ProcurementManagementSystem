@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import type { Role } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { LoginDto } from './dto/login.dto.js';
 import { signSessionToken } from './jwt.util.js';
@@ -33,7 +34,9 @@ export class AuthService {
       orgId: user.orgId,
       email: user.email,
       displayName: user.displayName,
-      roles: user.roles,
+      // roles is a Json column (see schema.prisma) storing a Role[] array —
+      // cast back at this boundary rather than loosening SessionClaims.
+      roles: user.roles as Role[],
     });
 
     return {

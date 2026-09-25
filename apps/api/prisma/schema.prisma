@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 /// A Losung360 tenant. Every other table is scoped by orgId — see
@@ -55,7 +55,11 @@ model User {
   email        String   @unique
   passwordHash String
   displayName  String
-  roles        Role[]
+  // MySQL has no native scalar-list column type (unlike Postgres' Role[]),
+  // so this stores the same JSON array of Role strings instead of adding a
+  // join table — the two Prisma-facing call sites (auth.service.ts,
+  // user.service.ts) cast it back to Role[] at the boundary.
+  roles        Json
   // Escalation target (P2P-023) once Central Login syncs a real org chart —
   // nullable, so an unmapped user simply never escalates rather than erroring.
   managerId      String?

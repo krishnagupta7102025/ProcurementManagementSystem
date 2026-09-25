@@ -7,20 +7,15 @@ Claude Code to build it).
 ## Prerequisites
 
 - Node.js 24+ (LTS), pnpm 9+ (`corepack enable && corepack prepare pnpm@9 --activate`)
-- Docker (for local Postgres + Redis) — **or**, if you don't have Docker:
-  - Postgres: `pnpm --filter api exec prisma dev --detach` (Prisma 7 ships a real
-    local Postgres you can run standalone). Known issue: this local instance's
-    shadow database can get stuck (`prisma migrate dev` fails with "type ... already
-    exists" against the shadow db even though the real schema is fine) — if that
-    happens, generate the migration SQL directly instead of letting `migrate dev`
-    diff it: `prisma migrate diff --from-config-datasource --to-schema
+- Docker (for local MySQL) — **or**, if you don't have Docker, a real MySQL 8
+  server some other way. Unlike Postgres, Prisma has no embedded/zero-install
+  local MySQL (no `prisma dev` equivalent) — a real server is required even
+  for local dev. If `prisma migrate dev`'s shadow-database step ever gets
+  stuck, generate the migration SQL directly instead of letting it diff:
+  `prisma migrate diff --from-config-datasource --to-schema
 ./prisma/schema.prisma --script`, save the output as a new
-    `prisma/migrations/<timestamp>_<name>/migration.sql`, then `prisma migrate
+  `prisma/migrations/<timestamp>_<name>/migration.sql`, then `prisma migrate
 deploy` (which doesn't touch the shadow db at all).
-  - Redis: build from source — it's a small, dependency-light C project.
-    `curl -fSL -o redis.tar.gz https://github.com/redis/redis/archive/refs/tags/<version>.tar.gz`,
-    extract, `make`, then run `src/redis-server --daemonize yes`. No sudo/Homebrew
-    needed if Xcode Command Line Tools (`cc`, `make`) are already installed.
 - AWS CLI configured with access to the dev S3 bucket (or point `S3_*` env vars at a
   local MinIO container for fully offline dev) — or set `STORAGE_DRIVER=local` to skip
   S3 entirely for local dev (see `src/storage/dev-local-storage.ts`)
@@ -34,8 +29,8 @@ deploy` (which doesn't touch the shadow db at all).
 git clone <this-repo>
 cd p2p
 pnpm install
-cp .env.example apps/api/.env    # fill in DB, Redis, S3, AUTH_JWT_SECRET
-docker compose up -d             # starts local Postgres + Redis
+cp .env.example apps/api/.env    # fill in DB, S3, AUTH_JWT_SECRET
+docker compose up -d             # starts local MySQL
 pnpm --filter api run db:migrate
 pnpm --filter api run db:seed    # creates demo users; prints each one's email + shared password
 ```
@@ -63,13 +58,12 @@ pnpm run build       # nest build + next build
 
 | Variable                                                                              | Purpose                                             |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `DATABASE_URL`                                                                        | Postgres connection string                          |
-| `REDIS_URL`                                                                           | Redis connection string (cache + BullMQ)            |
+| `DATABASE_URL`                                                                        | MySQL connection string                             |
 | `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                | Document storage (or set `STORAGE_DRIVER=local` to skip) |
 | `AUTH_JWT_SECRET`                                                                     | Signs/verifies local login sessions — required, API refuses to boot without it |
 | `NOTIFICATION_CENTER_API_URL`                                                         | Losung360 platform notification integration         |
 | `APPROVAL_SLA_REMINDER_HOURS`, `APPROVAL_SLA_ESCALATE_HOURS`                          | P2P-023 SLA thresholds (default 48h / 96h)          |
-| `APPROVAL_SLA_CHECK_INTERVAL_MS`                                                      | How often the escalation job scans (default 15 min) |
+| `CRON_SECRET`                                                                         | Bearer token the escalation-scan endpoint requires (see docs/deploy-aws.md) |
 
 The api's Nest-generated e2e suite (currently just a smoke test) runs separately:
 
@@ -91,10 +85,13 @@ alongside the other vitest specs and run via `pnpm run test` once it exists.
 
 ## Deployment
 
-Not yet defined for this module — follow whatever CI/CD pattern the platform team
-uses for other Losung360 services (ShipMaxx, SupplySphere) once this reaches a
-deployable milestone. Do not stand up new infra ad hoc; check with platform/infra
-before provisioning AWS resources beyond local dev.
+Hosted on AWS (2026-09-25 decision — see [deploy-aws.md](deploy-aws.md)):
+Elastic Beanstalk (Docker platform) for the API, RDS MySQL, S3 for document
+storage, and an EventBridge Scheduler rule driving the approval-SLA escalation
+endpoint. Earlier GitHub Pages/Vercel deploys
+([deploy-github-pages-render.md](deploy-github-pages-render.md),
+[deploy-vercel.md](deploy-vercel.md)) are superseded — kept for reference
+only.
 
 ## Definition of done for Phase 0
 

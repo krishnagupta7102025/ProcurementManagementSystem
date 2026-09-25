@@ -18,10 +18,17 @@ phase. [docs/99-build-guide.md](docs/99-build-guide.md) has local setup / run in
 
 - **Backend:** Node.js, NestJS, TypeScript
 - **Frontend:** Next.js (React), TypeScript, Tailwind
-- **DB:** PostgreSQL via Prisma ORM (transactional); Redis for cache/sessions/queues
-- **Async/jobs:** BullMQ on Redis (invoice OCR ingestion, approval reminders, payment batch runs)
+- **DB:** MySQL via Prisma ORM (`@prisma/adapter-mariadb`) — switched from the
+  original PostgreSQL choice (2026-09-25 decision, see `docs/00-prd.md` §12
+  Decisions Log). Prisma has no scalar-list column type on MySQL (unlike
+  Postgres' `Role[]`), so `User.roles` is stored as a `Json` array instead —
+  see the comment on that field in `prisma/schema.prisma`.
+- **Async/jobs:** no persistent queue (BullMQ/Redis was removed during the
+  brief Vercel-hosting experiment and not reinstated) — the approval-SLA
+  escalation job is a scheduled HTTP hit to `/internal/cron/escalation-scan`
+  (`CRON_SECRET`-protected), driven by an AWS EventBridge Scheduler rule.
 - **Storage:** S3-compatible object storage for PO PDFs, invoices, GRN attachments
-- **Infra:** AWS ap-south-1 (Mumbai), multi-AZ; Cloudflare in front of public endpoints
+- **Infra:** AWS (Elastic Beanstalk, Docker platform) — see `docs/deploy-aws.md`
 - **Auth:** Local email/password login, not Central Login SSO — a deliberate decision
   (2026-09-22), not a placeholder. Credentials are stored as bcrypt hashes on `User`;
   sessions are self-issued JWTs (`src/auth/jwt.util.ts`) signed with `AUTH_JWT_SECRET`.
