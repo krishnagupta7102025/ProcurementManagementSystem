@@ -10,3 +10,12 @@ coverage/
 
 # Regenerated via `prisma generate` — never hand-edited, never committed.
 apps/api/src/generated/
+
+# Terraform state/local artifacts — state lives remotely or locally per
+# whoever runs `terraform apply` (see docs/deploy-aws.md), never in git;
+# it contains secrets (DB password, JWT secret) in plaintext.
+infra/aws/.terraform/
+infra/aws/*.tfstate
+infra/aws/*.tfstate.*
+infra/aws/.terraform-build/
+infra/aws/*.tfvars

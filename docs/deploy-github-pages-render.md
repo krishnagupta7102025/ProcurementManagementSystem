@@ -1,8 +1,9 @@
-> **Superseded 2026-09-23** — the project moved to hosting both the
-> frontend and API on Vercel instead. See
-> [deploy-vercel.md](deploy-vercel.md) for the current plan. This doc is
-> kept for reference in case Render is ever revisited (the Dockerfile and
-> render.yaml it describes still exist in the repo, just unused).
+> **Superseded 2026-09-23**, then again **2026-09-25** — the project moved to
+> Vercel, then to AWS. See [deploy-aws.md](deploy-aws.md) for the current
+> plan ([deploy-vercel.md](deploy-vercel.md) covers the Vercel interim
+> step). This doc is kept for reference in case Render is ever revisited
+> (the Dockerfile and render.yaml it describes still exist in the repo,
+> just unused).
 
 # Deploying: GitHub Pages (frontend) + Render/Upstash/R2 (backend)
 

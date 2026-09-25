@@ -1,3 +1,9 @@
+> **Superseded 2026-09-25** — after repeated Vercel deployment issues (the
+> "Other" Framework Preset silently disabling zero-config NestJS detection)
+> and a decision to switch the database to MySQL, the project moved to AWS.
+> See [deploy-aws.md](deploy-aws.md) for the current plan. Kept for
+> reference.
+
 # Deploying: Vercel (frontend + API) + Neon (Postgres) + R2 (storage)
 
 Both the frontend and API run on Vercel now. The API deploys via Vercel's
